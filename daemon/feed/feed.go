@@ -43,6 +43,8 @@ type ProcessedPost struct {
 	At        uint64  `json:"at"`
 	Text      string  `json:"text"`
 	Handle    string  `json:"handle"`
+	Did       string  `json:"did"`
+	Rkey      string  `json:"rkey"`
 	Sentiment float64 `json:"sentiment"`
 }
 
@@ -71,6 +73,8 @@ func readAndFanMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensityA
 				At:        0,
 				Text:      body,
 				Handle:    "handle",
+				Did:       x.Did,
+				Rkey:      x.Commit.Rkey,
 				Sentiment: s,
 			})
 		}

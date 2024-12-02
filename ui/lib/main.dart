@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
@@ -176,11 +177,24 @@ class _MyHomePageState extends State<MyHomePage> {
                               text: "${element.handle}\n${element.text}"));
                           ScaffoldMessenger.of(context)
                               .showSnackBar(const SnackBar(
-                            content: Text("Copied to clipboard"),
+                            content: Text("Copied post to clipboard"),
                             duration: Duration(milliseconds: 1500),
                           ));
                         },
                         icon: const Icon(Icons.copy)),
+                    IconButton(
+                      icon: const Icon(Icons.share),
+                      onPressed: () async {
+                        Clipboard.setData(ClipboardData(
+                            text:
+                                "https://bsky.app/profile/${element.did}/post/${element.rkey}"));
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content: Text("Copied link to post to clipboard"),
+                            duration: Duration(milliseconds: 1500),
+                          ));
+                      },
+                    ),
                     buildSentimentScore(context, element.sentiment),
                   ])),
             ))
