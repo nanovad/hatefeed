@@ -17,18 +17,31 @@ class AboutScreen extends StatelessWidget {
         children: [
           // Version / build number
           FutureBuilder(
-              future: PackageInfo.fromPlatform(),
+              future: PackageInfo.fromPlatform(
+                  baseUrl: "http://hatefeed.nanovad.com/"),
               builder:
                   (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
+                String pi = snapshot.data?.version ?? "failed to retrieve";
+                String bn = snapshot.data?.buildNumber ?? "";
+
+                Widget? content;
+
                 if (snapshot.hasData) {
-                  String? pi = snapshot.data?.version ?? "failed to retrieve";
-                  String? bn = snapshot.data?.buildNumber ?? "";
-                  return ListTile(
-                    title: const Text("Version"),
-                    subtitle: Text("$pi+$bn"),
-                  );
+                  content = Text("$pi+$bn");
+                } else if (snapshot.hasError) {
+                  content = const Text("failed to retrieve");
+                } else {
+                  content = const Align(
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                          width: 24.0,
+                          height: 24.0,
+                          child: CircularProgressIndicator()));
                 }
-                return const CircularProgressIndicator();
+                return ListTile(
+                  title: const Text("Version"),
+                  subtitle: content,
+                );
               }),
           // GitHub link
           ListTile(
