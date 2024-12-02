@@ -26,12 +26,14 @@ func main() {
 	go http.ListenAndServe(":8080", nil)
 
 	feed.RunFeed(receivedMessage)
-
-	fmt.Println("Hello, world")
 }
 
 func respond(w http.ResponseWriter, r *http.Request) {
-	connection, _ := upgrader.Upgrade(w, r, nil)
+	connection, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Printf("Unable to upgrade client request: %s\n", err.Error())
+		connection.Close() // ignore close error
+	}
 	fmt.Println("Upgraded client request to websocket")
 
 	// Create a fanout receiver

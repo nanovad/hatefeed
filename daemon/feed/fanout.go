@@ -52,7 +52,7 @@ func (f *Fanout) Unsubscribe(Id ProcessedPostChannelId) {
 
 	delete(f.subs, Id)
 
-	fmt.Printf("Fanout receiver %d disconnected - %d receivers now connected", Id, len(f.subs))
+	fmt.Printf("Fanout receiver %d disconnected - %d receivers now connected\n", Id, len(f.subs))
 }
 
 func (f *Fanout) Publish(msg ProcessedPost) {
