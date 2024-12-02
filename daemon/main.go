@@ -22,6 +22,7 @@ var upgrader = websocket.Upgrader{
 var fanout = feed.NewFanout()
 
 func main() {
+	fmt.Printf("Hatefeed daemon v0.2.1\n")
 	http.HandleFunc("/", respond)
 	go http.ListenAndServe(":8080", nil)
 
@@ -34,7 +35,7 @@ func respond(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Unable to upgrade client request: %s\n", err.Error())
 		connection.Close() // ignore close error
 	}
-	fmt.Println("Upgraded client request to websocket")
+	fmt.Printf("Upgraded client request from %s to websocket", r.RemoteAddr)
 
 	// Create a fanout receiver
 	ppc := fanout.Subscribe()
