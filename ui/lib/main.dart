@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hatefeed/about_screen.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
@@ -120,6 +121,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: ThemeSwitcher(
                     defaultThemeMode: widget.defaultThemeMode,
                     onThemeModeChanged: widget.onThemeModeChanged)),
+            PopupMenuButton(
+                itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: const Text("About"),
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => const AboutScreen()));
+                        },
+                      )
+                    ])
           ],
         ),
         bottomNavigationBar: BottomAppBar(
