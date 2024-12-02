@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
@@ -157,19 +158,32 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> buildTiles(BuildContext context) {
     return posts
         .map((element) => Card(
-            color: Theme.of(context).colorScheme.surface,
-            elevation: 2.0,
-            child: ListTile(
-              title: Text(element.handle),
-              subtitle: Text(element.text),
-              trailing: buildSentimentScore(context, element.sentiment),
+              color: Theme.of(context).colorScheme.surface,
+              elevation: 2.0,
               shape: RoundedRectangleBorder(
                   side: BorderSide(
                       color: element.sentiment < -0.75
                           ? Colors.red
                           : Colors.transparent),
                   borderRadius: const BorderRadius.all(Radius.circular(5.0))),
-            )))
+              child: ListTile(
+                  title: Text(element.handle),
+                  subtitle: Text(element.text),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    IconButton(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(
+                              text: "${element.handle}\n${element.text}"));
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content: Text("Copied to clipboard"),
+                            duration: Duration(milliseconds: 1500),
+                          ));
+                        },
+                        icon: const Icon(Icons.copy)),
+                    buildSentimentScore(context, element.sentiment),
+                  ])),
+            ))
         .toList();
   }
 
