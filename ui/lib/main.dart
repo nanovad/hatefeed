@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
+import 'package:hatefeed/widget_theme_switcher.dart';
 
 Feed f = Feed();
 
@@ -30,7 +31,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   ThemeMode themeMode = ThemeMode.system;
 
-  void onThemeModeSelected(ThemeMode s) {
+  void onThemeModeChanged(ThemeMode s) {
     setState(() {
       themeMode = s;
     });
@@ -47,14 +48,21 @@ class _MyAppState extends State<MyApp> {
       darkTheme: ThemeData(brightness: Brightness.dark),
       themeMode: themeMode,
       home: MyHomePage(
-          title: 'Hatefeed', onThemeModeSelected: onThemeModeSelected),
+          title: 'Hatefeed',
+          defaultThemeMode: themeMode,
+          onThemeModeChanged: onThemeModeChanged),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  final Function(ThemeMode)? onThemeModeSelected;
-  const MyHomePage({super.key, required this.title, this.onThemeModeSelected});
+  final ThemeMode defaultThemeMode;
+  final Function(ThemeMode)? onThemeModeChanged;
+  const MyHomePage(
+      {super.key,
+      required this.title,
+      required this.defaultThemeMode,
+      this.onThemeModeChanged});
 
   final String title;
 
@@ -67,7 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
   num messagesSinceLastRefresh = 0.0;
   num messagesAverage = 0.0;
   late Timer messagesTimer;
-  ThemeMode themeMode = ThemeMode.system;
 
   bool paused = false;
 
@@ -121,24 +128,9 @@ class _MyHomePageState extends State<MyHomePage> {
             ]),
             Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                child: SegmentedButton(
-                  segments: const [
-                    ButtonSegment<ThemeMode>(
-                        value: ThemeMode.system,
-                        icon: Icon(Icons.app_settings_alt)),
-                    ButtonSegment<ThemeMode>(
-                        value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
-                    ButtonSegment<ThemeMode>(
-                        value: ThemeMode.light, icon: Icon(Icons.light_mode))
-                  ],
-                  selected: <ThemeMode>{themeMode},
-                  onSelectionChanged: (Set<ThemeMode> s) {
-                    setState(() {
-                      themeMode = s.first;
-                      widget.onThemeModeSelected?.call(themeMode);
-                    });
-                  },
-                ))
+                child: ThemeSwitcher(
+                    defaultThemeMode: widget.defaultThemeMode,
+                    onThemeModeChanged: widget.onThemeModeChanged))
           ],
         ),
         backgroundColor: Theme.of(context).colorScheme.surfaceDim,
