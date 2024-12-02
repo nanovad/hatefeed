@@ -66,7 +66,7 @@ func readAndFanMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensityA
 	if x.Kind == "commit" && body != "" && lang == "en" {
 		s := sentiment.ComputeSentiment(analyzer, body)
 
-		if s <= -0.5 {
+		if s <= -0.75 {
 			onData(ProcessedPost{
 				At:        0,
 				Text:      body,
