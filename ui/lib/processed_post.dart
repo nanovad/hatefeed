@@ -4,7 +4,7 @@ class ProcessedPost {
   String handle;
   String did;
   String rkey;
-  num sentiment;
+  double sentiment;
 
   ProcessedPost(
       {required this.at,

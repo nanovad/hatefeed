@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
+import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_theme_switcher.dart';
 
 Feed f = Feed();
@@ -156,43 +157,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget buildPostTile(BuildContext context, ProcessedPost p) {
-    bool extreme = p.sentiment < -0.9;
-
-    return Card(
-      color: Theme.of(context).colorScheme.surface,
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(
-          side: BorderSide(
-              width: extreme ? 2.0 : 1.0,
-              color: extreme ? Colors.red : Colors.transparent),
-          borderRadius: const BorderRadius.all(Radius.circular(5.0))),
-      child: ListTile(
-          title: Text(p.handle),
-          subtitle: Text(p.text),
-          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-            IconButton(
-                onPressed: () {
-                  Clipboard.setData(
-                      ClipboardData(text: "${p.handle}\n${p.text}"));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("Copied post to clipboard"),
-                    duration: Duration(milliseconds: 1500),
-                  ));
-                },
-                icon: const Icon(Icons.copy)),
-            IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () async {
-                Clipboard.setData(ClipboardData(
-                    text: "https://bsky.app/profile/${p.did}/post/${p.rkey}"));
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Copied link to post to clipboard"),
-                  duration: Duration(milliseconds: 1500),
-                ));
-              },
-            ),
-            buildSentimentScore(context, p.sentiment),
-          ])),
+    return PostCard(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      handle: p.handle,
+      body: p.text,
+      extreme: p.sentiment < -0.9,
+      sentiment: p.sentiment,
+      onCopyPressed: () {
+        Clipboard.setData(ClipboardData(text: "${p.handle}\n${p.text}"));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Copied post to clipboard"),
+          duration: Duration(milliseconds: 1500),
+        ));
+      },
+      onSharePressed: () async {
+        Clipboard.setData(ClipboardData(
+            text: "https://bsky.app/profile/${p.did}/post/${p.rkey}"));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Copied link to post to clipboard"),
+          duration: Duration(milliseconds: 1500),
+        ));
+      },
     );
   }
 
