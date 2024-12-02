@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
@@ -150,55 +149,55 @@ class _MyHomePageState extends State<MyHomePage> {
             constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
             child: ListView(
               reverse: true,
-              children: buildTiles(context),
+              children: buildPostTiles(context),
             ),
           )))
         ]));
   }
 
-  List<Widget> buildTiles(BuildContext context) {
-    return posts
-        .map((element) => Card(
-              color: Theme.of(context).colorScheme.surface,
-              elevation: 2.0,
-              shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                      color: element.sentiment < -0.75
-                          ? Colors.red
-                          : Colors.transparent),
-                  borderRadius: const BorderRadius.all(Radius.circular(5.0))),
-              child: ListTile(
-                  title: Text(element.handle),
-                  subtitle: Text(element.text),
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    IconButton(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(
-                              text: "${element.handle}\n${element.text}"));
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                            content: Text("Copied post to clipboard"),
-                            duration: Duration(milliseconds: 1500),
-                          ));
-                        },
-                        icon: const Icon(Icons.copy)),
-                    IconButton(
-                      icon: const Icon(Icons.share),
-                      onPressed: () async {
-                        Clipboard.setData(ClipboardData(
-                            text:
-                                "https://bsky.app/profile/${element.did}/post/${element.rkey}"));
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                            content: Text("Copied link to post to clipboard"),
-                            duration: Duration(milliseconds: 1500),
-                          ));
-                      },
-                    ),
-                    buildSentimentScore(context, element.sentiment),
-                  ])),
-            ))
-        .toList();
+  Widget buildPostTile(BuildContext context, ProcessedPost p) {
+    bool extreme = p.sentiment < -0.9;
+
+    return Card(
+      color: Theme.of(context).colorScheme.surface,
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+          side: BorderSide(
+              width: extreme ? 2.0 : 1.0,
+              color: extreme ? Colors.red : Colors.transparent),
+          borderRadius: const BorderRadius.all(Radius.circular(5.0))),
+      child: ListTile(
+          title: Text(p.handle),
+          subtitle: Text(p.text),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            IconButton(
+                onPressed: () {
+                  Clipboard.setData(
+                      ClipboardData(text: "${p.handle}\n${p.text}"));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Copied post to clipboard"),
+                    duration: Duration(milliseconds: 1500),
+                  ));
+                },
+                icon: const Icon(Icons.copy)),
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: () async {
+                Clipboard.setData(ClipboardData(
+                    text: "https://bsky.app/profile/${p.did}/post/${p.rkey}"));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Copied link to post to clipboard"),
+                  duration: Duration(milliseconds: 1500),
+                ));
+              },
+            ),
+            buildSentimentScore(context, p.sentiment),
+          ])),
+    );
+  }
+
+  List<Widget> buildPostTiles(BuildContext context) {
+    return posts.map((element) => buildPostTile(context, element)).toList();
   }
 
   Color sentimentColor(num sentiment) {
