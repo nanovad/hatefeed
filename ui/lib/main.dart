@@ -10,8 +10,9 @@ import 'package:hatefeed/processed_post.dart';
 Feed f = Feed();
 
 void main() {
-  Uri feedWebsocketUri =
-      Uri.parse(kDebugMode ? "ws://localhost:8080" : "ws://hatefeed.nanovad.com:80/feed_ws/");
+  Uri feedWebsocketUri = Uri.parse(kDebugMode
+      ? "ws://localhost:8080"
+      : "ws://hatefeed.nanovad.com:80/feed_ws/");
   f.connect(feedWebsocketUri);
   f.onQueueAdded = () {
     log("Queue message added: ${f.queue.removeFirst()}");
@@ -19,10 +20,22 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<StatefulWidget> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode themeMode = ThemeMode.light;
+
+  void onThemeModeSelected(ThemeMode s) {
+    setState(() {
+      themeMode = s;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -31,13 +44,17 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: MyHomePage(title: 'Hatefeed'),
+      darkTheme: ThemeData(brightness: Brightness.dark),
+      themeMode: themeMode,
+      home: MyHomePage(
+          title: 'Hatefeed', onThemeModeSelected: onThemeModeSelected),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({super.key, required this.title});
+  final Function(ThemeMode)? onThemeModeSelected;
+  const MyHomePage({super.key, required this.title, this.onThemeModeSelected});
 
   final String title;
 
@@ -50,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
   num messagesSinceLastRefresh = 0.0;
   num messagesAverage = 0.0;
   late Timer messagesTimer;
+  ThemeMode themeMode = ThemeMode.system;
 
   _MyHomePageState() : super() {
     messagesTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
@@ -76,7 +94,28 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text(widget.title),
+          actions: [
+            SegmentedButton(
+              segments: const [
+                ButtonSegment<ThemeMode>(
+                    value: ThemeMode.system,
+                    icon: Icon(Icons.app_settings_alt)),
+                ButtonSegment<ThemeMode>(
+                    value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
+                ButtonSegment<ThemeMode>(
+                    value: ThemeMode.light, icon: Icon(Icons.light_mode))
+              ],
+              selected: <ThemeMode>{themeMode},
+              onSelectionChanged: (Set<ThemeMode> s) {
+                setState(() {
+                  themeMode = s.first;
+                  widget.onThemeModeSelected?.call(themeMode);
+                });
+              },
+            )
+          ],
         ),
+        backgroundColor: Theme.of(context).colorScheme.surfaceDim,
         body: Column(children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -100,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> buildTiles(BuildContext context) {
     return posts
         .map((element) => Card(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             elevation: 2.0,
             child: ListTile(
               title: Text(element.handle),
