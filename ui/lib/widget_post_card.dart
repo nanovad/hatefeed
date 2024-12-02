@@ -9,6 +9,7 @@ class PostCard extends StatelessWidget {
   final double sentiment;
   final Function()? onCopyPressed;
   final Function()? onSharePressed;
+  final Function()? onOpenInBrowserPressed;
 
   const PostCard(
       {super.key,
@@ -18,7 +19,8 @@ class PostCard extends StatelessWidget {
       required this.body,
       required this.sentiment,
       this.onCopyPressed,
-      this.onSharePressed});
+      this.onSharePressed,
+      this.onOpenInBrowserPressed});
 
   Color sentimentColor(double sentiment) {
     num lerpPoint = -sentiment;
@@ -78,6 +80,10 @@ class PostCard extends StatelessWidget {
                             iconSize: 24.0,
                             icon: const Icon(Icons.share),
                             onPressed: onSharePressed),
+                        IconButton(
+                          iconSize: 24.0,
+                            onPressed: onOpenInBrowserPressed,
+                            icon: const Icon(Icons.open_in_browser))
                       ]),
                     ]),
                 // Body

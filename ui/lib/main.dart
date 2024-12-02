@@ -9,6 +9,7 @@ import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
 import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_theme_switcher.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Feed f = Feed();
 
@@ -165,20 +166,35 @@ class _MyHomePageState extends State<MyHomePage> {
       sentiment: p.sentiment,
       onCopyPressed: () {
         Clipboard.setData(ClipboardData(text: "${p.handle}\n${p.text}"));
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Copied post to clipboard"),
-          duration: Duration(milliseconds: 1500),
-        ));
+        // Make sure we are mounted in the Widget tree; if we are not, we can't
+        // show a toast.
+        if(mounted) {
+          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
+              content: Text("Copied post to clipboard"),
+              duration: Duration(milliseconds: 1500)));
+        }
       },
       onSharePressed: () async {
-        Clipboard.setData(ClipboardData(
-            text: "https://bsky.app/profile/${p.did}/post/${p.rkey}"));
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Copied link to post to clipboard"),
-          duration: Duration(milliseconds: 1500),
-        ));
+        Clipboard.setData(ClipboardData(text: createPostLink(p)));
+        if(mounted) {
+          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
+              content: Text("Copied link to post to clipboard"),
+              duration: Duration(milliseconds: 1500)));
+        }
+      },
+      onOpenInBrowserPressed: () async {
+        await launchUrl(Uri.parse(createPostLink(p)));
+        if(mounted) {
+          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
+              content: Text("Opened post in browser"),
+              duration: Duration(milliseconds: 1500)));
+        }
       },
     );
+  }
+
+  String createPostLink(ProcessedPost p) {
+    return "https://bsky.app/profile/${p.did}/post/${p.rkey}";
   }
 
   List<Widget> buildPostTiles(BuildContext context) {
