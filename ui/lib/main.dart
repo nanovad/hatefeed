@@ -115,42 +115,33 @@ class _MyHomePageState extends State<MyHomePage> {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text(widget.title),
           actions: [
-            Row(children: [
-              const Padding(
-                  padding: EdgeInsets.only(right: 6.0),
-                  child: Text(
-                    "Pause",
-                    style: TextStyle(
-                        fontWeight: FontWeight.normal, fontSize: 18.0),
-                  )),
-              Switch(
-                  value: paused,
-                  onChanged: (newState) => setState(() {
-                        paused = newState;
-                      }))
-            ]),
             Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0),
                 child: ThemeSwitcher(
                     defaultThemeMode: widget.defaultThemeMode,
-                    onThemeModeChanged: widget.onThemeModeChanged))
+                    onThemeModeChanged: widget.onThemeModeChanged)),
           ],
+        ),
+        bottomNavigationBar: BottomAppBar(
+          padding: const EdgeInsets.all(4.0),
+          height: 48.0,
+          child: Row(
+            children: [
+              buildGitHubIconWidget(),
+              buildMessageRateWidget(),
+              buildPauseToggle()
+            ],
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surfaceDim,
         body: Column(children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              "msg/s: ${messagesAverage.toStringAsFixed(1)}",
-              style: const TextStyle(fontSize: 16.0),
-            ),
-          ),
           Expanded(
               child: Center(
                   child: ConstrainedBox(
             constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
             child: ListView(
               reverse: true,
+              padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
               children: buildPostTiles(context),
             ),
           )))
@@ -191,6 +182,45 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       },
     );
+  }
+
+  Widget buildGitHubIconWidget() {
+    return Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: IconButton(
+            onPressed: () {
+              launchUrl(Uri.parse("https://github.com/nanovad/hatefeed"));
+            },
+            icon: const ImageIcon(AssetImage("images/github-mark.png"))));
+  }
+
+  Widget buildMessageRateWidget() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        child: Text(
+          textAlign: TextAlign.center,
+          "msg/s: ${messagesAverage.toStringAsFixed(1)}",
+          style: const TextStyle(fontSize: 16.0),
+        ),
+      ),
+    );
+  }
+
+  Widget buildPauseToggle() {
+    return Row(children: [
+      const Padding(
+          padding: EdgeInsets.only(right: 6.0),
+          child: Text(
+            "Pause",
+            style: TextStyle(fontWeight: FontWeight.normal, fontSize: 18.0),
+          )),
+      Switch(
+          value: paused,
+          onChanged: (newState) => setState(() {
+                paused = newState;
+              }))
+    ]);
   }
 
   String createPostLink(ProcessedPost p) {
