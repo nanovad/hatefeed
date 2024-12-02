@@ -69,6 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
   late Timer messagesTimer;
   ThemeMode themeMode = ThemeMode.system;
 
+  bool paused = false;
+
   _MyHomePageState() : super() {
     messagesTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       setState(() {
@@ -76,16 +78,24 @@ class _MyHomePageState extends State<MyHomePage> {
         messagesSinceLastRefresh = 0.0;
       });
     });
-    f.onQueueAdded = () {
-      setState(() {
-        posts.insert(0, f.queue.removeFirst());
-        while (posts.length > 100) {
-          // TODO: Make this more efficient
-          posts.removeLast();
-        }
-        messagesSinceLastRefresh += 1.0;
-      });
-    };
+    f.onQueueAdded = postQueueHandler;
+  }
+
+  void postQueueHandler() {
+    if (paused) {
+      f.queue.clear();
+    } else {
+      while (f.queue.isNotEmpty) {
+        setState(() {
+          posts.insert(0, f.queue.removeFirst());
+          while (posts.length > 100) {
+            // TODO: Make this more efficient
+            posts.removeLast();
+          }
+          messagesSinceLastRefresh += 1.0;
+        });
+      }
+    }
   }
 
   @override
@@ -95,24 +105,40 @@ class _MyHomePageState extends State<MyHomePage> {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text(widget.title),
           actions: [
-            SegmentedButton(
-              segments: const [
-                ButtonSegment<ThemeMode>(
-                    value: ThemeMode.system,
-                    icon: Icon(Icons.app_settings_alt)),
-                ButtonSegment<ThemeMode>(
-                    value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
-                ButtonSegment<ThemeMode>(
-                    value: ThemeMode.light, icon: Icon(Icons.light_mode))
-              ],
-              selected: <ThemeMode>{themeMode},
-              onSelectionChanged: (Set<ThemeMode> s) {
-                setState(() {
-                  themeMode = s.first;
-                  widget.onThemeModeSelected?.call(themeMode);
-                });
-              },
-            )
+            Row(children: [
+              const Padding(
+                  padding: EdgeInsets.only(right: 6.0),
+                  child: Text(
+                    "Pause",
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, fontSize: 18.0),
+                  )),
+              Switch(
+                  value: paused,
+                  onChanged: (newState) => setState(() {
+                        paused = newState;
+                      }))
+            ]),
+            Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                child: SegmentedButton(
+                  segments: const [
+                    ButtonSegment<ThemeMode>(
+                        value: ThemeMode.system,
+                        icon: Icon(Icons.app_settings_alt)),
+                    ButtonSegment<ThemeMode>(
+                        value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
+                    ButtonSegment<ThemeMode>(
+                        value: ThemeMode.light, icon: Icon(Icons.light_mode))
+                  ],
+                  selected: <ThemeMode>{themeMode},
+                  onSelectionChanged: (Set<ThemeMode> s) {
+                    setState(() {
+                      themeMode = s.first;
+                      widget.onThemeModeSelected?.call(themeMode);
+                    });
+                  },
+                ))
           ],
         ),
         backgroundColor: Theme.of(context).colorScheme.surfaceDim,
