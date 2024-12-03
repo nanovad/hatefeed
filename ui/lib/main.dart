@@ -17,7 +17,7 @@ Feed f = Feed();
 void main() {
   Uri feedWebsocketUri = Uri.parse(kDebugMode
       ? "ws://localhost:8080"
-      : "ws://hatefeed.nanovad.com:80/feed_ws/");
+      : "wss://hatefeed.nanovad.com/feed_ws/");
   f.connect(feedWebsocketUri);
   f.onQueueAdded = () {
     log("Queue message added: ${f.queue.removeFirst()}");
