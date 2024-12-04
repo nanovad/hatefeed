@@ -150,11 +150,12 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Center(
                   child: ConstrainedBox(
             constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
-            child: ListView(
-              reverse: true,
-              padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-              children: buildPostTiles(context),
-            ),
+            child: ListView.builder(
+                reverse: true,
+                padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+                itemCount: posts.length,
+                itemBuilder: (context, i) =>
+                    buildPostTile(context, posts[i])),
           )))
         ]));
   }
@@ -236,10 +237,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String createPostLink(ProcessedPost p) {
     return "https://bsky.app/profile/${p.did}/post/${p.rkey}";
-  }
-
-  List<Widget> buildPostTiles(BuildContext context) {
-    return posts.map((element) => buildPostTile(context, element)).toList();
   }
 
   Color sentimentColor(num sentiment) {
