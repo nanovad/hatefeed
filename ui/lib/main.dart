@@ -96,16 +96,18 @@ class _MyHomePageState extends State<MyHomePage> {
     if (paused) {
       f.queue.clear();
     } else {
-      while (f.queue.isNotEmpty) {
-        setState(() {
-          posts.insert(0, f.queue.removeFirst());
-          while (posts.length > 100) {
-            // TODO: Make this more efficient
-            posts.removeLast();
-          }
-          messagesSinceLastRefresh += 1.0;
-        });
-      }
+      setState(() {
+        // Spread the new posts in queue and combine them with the existing
+        // posts list
+        posts = [...f.queue, ...posts];
+        // Clear the queue (all items are now in posts)
+        f.queue.clear();
+        // Trim the posts list to 100 items max
+        if (posts.length > 100) {
+          posts.removeRange(100, posts.length);
+        }
+        messagesSinceLastRefresh += 1.0;
+      });
     }
   }
 
