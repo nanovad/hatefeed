@@ -98,6 +98,9 @@ func RunFeed(onData func(post ProcessedPost)) error {
 		} else {
 			// Reset these variables if we successfully connect after a failed connection
 			feedReconnectAttempts = 0
+			feedBackoffDuration = 4
+
+			log.Println("Connected to Jetstream")
 
 			analyzer := sentiment.SetupAnalyzer()
 			for {
