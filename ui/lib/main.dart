@@ -8,17 +8,23 @@ import 'package:hatefeed/about_screen.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
+import 'package:hatefeed/widget_connection_state.dart';
 import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_theme_switcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-Feed f = Feed();
+late FeedController fc;
+var f = fc.feed;
 
 void main() {
   Uri feedWebsocketUri = Uri.parse(kDebugMode
       ? "ws://localhost:8080"
       : "wss://hatefeed.nanovad.com/feed_ws/");
-  f.connect(feedWebsocketUri);
+  fc = FeedController(
+      uri: feedWebsocketUri, timeout: const Duration(seconds: 120));
+  fc.connectWithRetry();
+  // fc.connectWithRetry(feedWebsocketUri, const Duration(seconds: 60));
+  // f.connect(feedWebsocketUri);
   f.onQueueAdded = () {
     log("Queue message added: ${f.queue.removeFirst()}");
   };
@@ -90,6 +96,15 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     });
     f.onQueueAdded = postQueueHandler;
+    fc.onConnected = () {
+      setState(() {});
+    };
+    fc.onConnecting = () {
+      setState(() {});
+    };
+    fc.onDisconnected = () {
+      setState(() {});
+    };
   }
 
   void postQueueHandler() {
@@ -141,7 +156,14 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Row(
             children: [
               buildGitHubIconWidget(),
-              buildMessageRateWidget(),
+              Expanded(
+                  child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ConnectionStateIndicator(state: fc.state),
+                  buildMessageRateWidget(),
+                ],
+              )),
               buildPauseToggle()
             ],
           ),
@@ -209,14 +231,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget buildMessageRateWidget() {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-        child: Text(
-          textAlign: TextAlign.center,
-          "msg/s: ${messagesAverage.toStringAsFixed(1)}",
-          style: const TextStyle(fontSize: 16.0),
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+      child: Text(
+        textAlign: TextAlign.center,
+        "msg/s: ${messagesAverage.toStringAsFixed(1)}",
+        style: const TextStyle(fontSize: 16.0),
       ),
     );
   }
