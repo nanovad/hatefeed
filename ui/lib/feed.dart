@@ -66,6 +66,7 @@ class FeedController {
   FeedState _state = FeedState.initial;
   Uri uri;
   Duration timeout;
+  bool _reconnecting = false;
 
   set state(value) {
     if (_state != value) {
@@ -86,11 +87,15 @@ class FeedController {
   }
 
   void _feedOnDone() {
-    connectWithRetry();
+    if(!_reconnecting) {
+      connectWithRetry();
+    }
   }
 
   void _feedOnError(Object error) {
-    connectWithRetry();
+    if(!_reconnecting) {
+      connectWithRetry();
+    }
   }
 
   Future<bool> connect(Uri uri) async {
@@ -109,6 +114,7 @@ class FeedController {
 
   Future<bool> connectWithRetry(
       {Duration step = const Duration(seconds: 2)}) async {
+    _reconnecting = true;
     // Reconnect with an exponential backoff, increasing the retry interval by
     // `step` every time an attempt fails.
     Duration delay = step;
@@ -125,10 +131,12 @@ class FeedController {
       waited += delay;
       // If we exceed the timeout, the attempt has failed.
       if (waited > timeout) {
+        _reconnecting = false;
         return false;
       }
     }
 
+    _reconnecting = false;
     return true;
   }
 
