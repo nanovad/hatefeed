@@ -16,6 +16,16 @@ echo "Output archive name: $out_archive_name"
 out_archive_path="build/$out_archive_name"
 echo "Output archive path: $out_archive_path"
 
+if [ -f "$out_archive_path" ]; then
+    echo -ne "\n\e[31mWarning: The archive file for version $ver_and_build already exists. "
+    echo -e "(Did you forget to bump the version number?)\e[0m"
+    read -p "Continue, overwriting this file? (Y/N): " ignore_ver_exists
+    if [[ $ignore_ver_exists != [yY] ]]; then
+        echo "Quitting"
+        exit 1
+    fi
+fi
+
 # -Force will overwrite
 # powershell -Command "Compress-Archive -Path 'build/web' -DestinationPath '$out_archive_path' -Force"
 # zip -d "build/web" -o "$out_zip_abs"
