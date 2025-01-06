@@ -35,14 +35,15 @@ func (f *Fanout) Subscribe() ProcessedPostChannel {
 
 	id := f.getNextId()
 
-	fmt.Printf("Subscribed fanout receiver %d\n", id)
-
 	ppc := ProcessedPostChannel{
 		Id:      id,
 		Channel: make(chan ProcessedPost, 50),
 	}
 
 	f.subs[id] = ppc
+
+	fmt.Printf("Subscribed fanout receiver %d - %d receivers now connected\n", id, len(f.subs))
+
 	return ppc
 }
 
@@ -60,6 +61,11 @@ func (f *Fanout) Publish(msg ProcessedPost) {
 	defer f.mu.Unlock()
 	for _, ppc := range f.subs {
 		// TODO: How's the performance of this fanout?
-		ppc.Channel <- msg
+		select {
+		case ppc.Channel <- msg:
+			// Message sent to the receiver successfully
+		default:
+			fmt.Printf("Warning: channel for receiver %d is full, dropping message\n", ppc.Id)
+		}
 	}
 }
