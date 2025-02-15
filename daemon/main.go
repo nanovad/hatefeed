@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
+	"hatefeed/client"
 	"hatefeed/feed"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -22,11 +21,11 @@ var upgrader = websocket.Upgrader{
 var fanout = feed.NewFanout()
 
 func main() {
-	fmt.Printf("Hatefeed daemon v0.2.2\n")
+	fmt.Printf("Hatefeed daemon v0.3.0\n")
 	http.HandleFunc("/", respond)
-	go http.ListenAndServe(":8080", nil)
+	go http.ListenAndServe("127.0.0.1:8080", nil)
 
-	feed.RunFeed(receivedMessage)
+	feed.RunFeed(feedReceivedMessage)
 }
 
 func respond(w http.ResponseWriter, r *http.Request) {
@@ -37,33 +36,16 @@ func respond(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Printf("Upgraded client request from %s to websocket\n", r.RemoteAddr)
 
-	// Create a fanout receiver
-	ppc := fanout.Subscribe()
+	feedClient := client.NewClient(fanout, connection)
 
 	connection.SetCloseHandler(func(code int, text string) error {
-		fanout.Unsubscribe(ppc.Id)
+		feedClient.Quit()
 		return nil
 	})
 
-	_, data, err := connection.ReadMessage()
-	if err != nil {
-		log.Printf("Failed to connect to client: %s. Closing", err.Error())
-		return
-	}
-	if bytes.Equal(data, []byte("READY")) {
-		connection.WriteMessage(websocket.TextMessage, []byte("OKAYLESGO"))
-	}
-
-	for {
-		msg := <-ppc.Channel
-		if err := connection.WriteJSON(msg); err != nil {
-			fanout.Unsubscribe(ppc.Id)
-			connection.Close()
-			break
-		}
-	}
+	feedClient.RunClient()
 }
 
-func receivedMessage(p feed.ProcessedPost) {
+func feedReceivedMessage(p feed.ProcessedPost) {
 	fanout.Publish(p)
 }

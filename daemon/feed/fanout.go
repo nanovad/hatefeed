@@ -16,12 +16,12 @@ type ProcessedPostChannel struct {
 type Fanout struct {
 	mu     sync.RWMutex
 	nextId atomic.Uint64
-	subs   map[ProcessedPostChannelId]ProcessedPostChannel
+	subs   map[ProcessedPostChannelId]*ProcessedPostChannel
 }
 
 func NewFanout() *Fanout {
 	var f Fanout
-	f.subs = make(map[ProcessedPostChannelId]ProcessedPostChannel)
+	f.subs = make(map[ProcessedPostChannelId]*ProcessedPostChannel)
 	return &f
 }
 
@@ -29,7 +29,7 @@ func (f *Fanout) getNextId() ProcessedPostChannelId {
 	return ProcessedPostChannelId(f.nextId.Add(1))
 }
 
-func (f *Fanout) Subscribe() ProcessedPostChannel {
+func (f *Fanout) Subscribe() *ProcessedPostChannel {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -40,11 +40,11 @@ func (f *Fanout) Subscribe() ProcessedPostChannel {
 		Channel: make(chan ProcessedPost, 50),
 	}
 
-	f.subs[id] = ppc
+	f.subs[id] = &ppc
 
 	fmt.Printf("Subscribed fanout receiver %d - %d receivers now connected\n", id, len(f.subs))
 
-	return ppc
+	return &ppc
 }
 
 func (f *Fanout) Unsubscribe(Id ProcessedPostChannelId) {

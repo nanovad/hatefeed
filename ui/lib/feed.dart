@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:hatefeed/processed_post.dart';
+import 'package:hatefeed/widget_feed_mode_switcher.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 enum FeedState { connected, connecting, disconnected, reconnecting, initial }
@@ -138,6 +139,24 @@ class FeedController {
 
     _reconnecting = false;
     return true;
+  }
+
+  void setInterval(int intervalMs) {
+    feed.channel?.sink.add("INTERVAL $intervalMs");
+  }
+
+  void setThreshold(double threshold) {
+    feed.channel?.sink.add("THRESHOLD $threshold");
+  }
+
+  void setMode(FeedMode mode) {
+    var sink = feed.channel?.sink;
+    if(mode == FeedMode.interval) {
+      sink?.add("MODE RATE");
+    }
+    else if(mode == FeedMode.threshold) {
+      sink?.add("MODE THRESHOLD");
+    }
   }
 
   void onStateChanged() {

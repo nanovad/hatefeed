@@ -52,7 +52,7 @@ type Feed struct {
 	Fanout Fanout
 }
 
-func readAndFanMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensityAnalyzer, onData func(ProcessedPost)) error {
+func readAndNotifyMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensityAnalyzer, onData func(ProcessedPost)) error {
 	var x jetstreamMessage
 	err := conn.ReadJSON(&x)
 	if err != nil {
@@ -68,7 +68,7 @@ func readAndFanMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensityA
 	if x.Kind == "commit" && body != "" && lang == "en" {
 		s := sentiment.ComputeSentiment(analyzer, body)
 
-		if s <= -0.75 {
+		if s < 0.00 {
 			onData(ProcessedPost{
 				At:        0,
 				Text:      body,
@@ -104,7 +104,7 @@ func RunFeed(onData func(post ProcessedPost)) error {
 
 			analyzer := sentiment.SetupAnalyzer()
 			for {
-				if err := readAndFanMessage(conn, &analyzer, onData); err != nil {
+				if err := readAndNotifyMessage(conn, &analyzer, onData); err != nil {
 					log.Printf("Error fanning message: %s\n", err)
 					consecutiveMessageReadAttempts++
 					if consecutiveMessageReadAttempts > 3 {

@@ -9,19 +9,18 @@ import 'package:hatefeed/about_screen.dart';
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/processed_post.dart';
 import 'package:hatefeed/widget_connection_state.dart';
+import 'package:hatefeed/widget_feed_mode_switcher.dart';
 import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_theme_switcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-late FeedController fc;
+Uri feedWebsocketUri = Uri.parse(
+    kDebugMode ? "ws://localhost:8080" : "wss://hatefeed.nanovad.com/feed_ws/");
+var fc = FeedController(
+    uri: feedWebsocketUri, timeout: const Duration(seconds: 120));
 var f = fc.feed;
 
 void main() {
-  Uri feedWebsocketUri = Uri.parse(kDebugMode
-      ? "ws://localhost:8080"
-      : "wss://hatefeed.nanovad.com/feed_ws/");
-  fc = FeedController(
-      uri: feedWebsocketUri, timeout: const Duration(seconds: 120));
   fc.connectWithRetry();
   // fc.connectWithRetry(feedWebsocketUri, const Duration(seconds: 60));
   // f.connect(feedWebsocketUri);
@@ -85,6 +84,9 @@ class _MyHomePageState extends State<MyHomePage> {
   num messagesSinceLastRefresh = 0.0;
   num messagesAverage = 0.0;
   late Timer messagesTimer;
+  var feedMode = FeedMode.interval;
+  double feedIntervalMs = 3000;
+  double feedThreshold = -0.75;
 
   bool paused = false;
 
@@ -98,6 +100,11 @@ class _MyHomePageState extends State<MyHomePage> {
     f.onQueueAdded = postQueueHandler;
     fc.onConnected = () {
       setState(() {});
+      // Make sure the server and client mode/interval/threshold parameters are
+      // in sync, in case we're reconnecting.
+      fc.setMode(feedMode);
+      fc.setInterval(feedIntervalMs.toInt());
+      fc.setThreshold(feedThreshold);
     };
     fc.onConnecting = () {
       setState(() {});
@@ -131,13 +138,22 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
+          title: FittedBox(fit: BoxFit.scaleDown, child: Text(widget.title)),
           actions: [
             Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                child: ThemeSwitcher(
-                    defaultThemeMode: widget.defaultThemeMode,
-                    onThemeModeChanged: widget.onThemeModeChanged)),
+                child: IconButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) => StatefulBuilder(builder:
+                                  (BuildContext context,
+                                      StateSetter setModalState) {
+                                return buildBottomSettingsSheet(
+                                    context, setModalState);
+                              }));
+                    },
+                    icon: const Icon(Icons.tune_outlined))),
             PopupMenuButton(
                 itemBuilder: (context) => [
                       PopupMenuItem(
@@ -178,8 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 reverse: true,
                 padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
                 itemCount: posts.length,
-                itemBuilder: (context, i) =>
-                    buildPostTile(context, posts[i])),
+                itemBuilder: (context, i) => buildPostTile(context, posts[i])),
           )))
         ]));
   }
@@ -195,7 +210,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Clipboard.setData(ClipboardData(text: "${p.handle}\n${p.text}"));
         // Make sure we are mounted in the Widget tree; if we are not, we can't
         // show a toast.
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
               content: Text("Copied post to clipboard"),
               duration: Duration(milliseconds: 1500)));
@@ -203,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       onSharePressed: () async {
         Clipboard.setData(ClipboardData(text: createPostLink(p)));
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
               content: Text("Copied link to post to clipboard"),
               duration: Duration(milliseconds: 1500)));
@@ -211,7 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       onOpenInBrowserPressed: () async {
         await launchUrl(Uri.parse(createPostLink(p)));
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
               content: Text("Opened post in browser"),
               duration: Duration(milliseconds: 1500)));
@@ -255,6 +270,119 @@ class _MyHomePageState extends State<MyHomePage> {
                 paused = newState;
               }))
     ]);
+  }
+
+  Widget buildBottomSettingsSheet(BuildContext context, StateSetter setState) {
+    // We're shadowing setState so that the modal updates properly, instead of
+    // updating further up the tree.
+    return Column(
+      children: [
+        const Padding(
+            padding: EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0.0),
+            child: Text("Settings", style: TextStyle(fontSize: 18.0))),
+        const Divider(thickness: 1.0),
+        Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+            child: Row(children: [
+              const Text("Theme", style: TextStyle(fontSize: 16.0)),
+              const Spacer(),
+              ThemeSwitcher(
+                  defaultThemeMode: widget.defaultThemeMode,
+                  onThemeModeChanged: widget.onThemeModeChanged)
+            ])),
+        // Feed mode and associated sliders
+        Column(children: [
+          // Label and segmented button
+          Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+              child: Row(
+                children: [
+                  const Text("Feed mode", style: TextStyle(fontSize: 16.0)),
+                  const Spacer(),
+                  FeedModeSwitcher(
+                    defaultFeedMode: feedMode,
+                    onFeedModeChanged: (selected) {
+                      setState(() {
+                        feedMode = selected;
+                        fc.setMode(feedMode);
+                      });
+                    },
+                  )
+                ],
+              )),
+          // Slider according to which mode we're in
+          // Interval
+          Visibility(
+              visible: feedMode == FeedMode.interval,
+              child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+                  child: Column(children: [
+                    Row(children: [
+                      Padding(
+                          padding: const EdgeInsets.only(right: 32.0),
+                          child: Text("Interval:  ${renderInterval()}",
+                              style: const TextStyle(fontSize: 16.0)))
+                    ]),
+                    Row(
+                      children: [
+                        const Text("realtime"),
+                        Expanded(
+                            child: Slider(
+                          min: 0,
+                          max: 10000.0,
+                          divisions: 100,
+                          value: feedIntervalMs,
+                          label: "${feedIntervalMs.toStringAsFixed(0)}ms",
+                          onChanged: (value) =>
+                              setState(() => feedIntervalMs = value),
+                          onChangeEnd: (value) => fc.setInterval(value.toInt()),
+                        )),
+                        const Text("10000ms")
+                      ],
+                    )
+                  ]))),
+          // Threshold
+          Visibility(
+              visible: feedMode == FeedMode.threshold,
+              child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+                  child: Column(children: [
+                    Row(children: [
+                      Padding(
+                          padding: const EdgeInsets.only(right: 32.0),
+                          child: Text("Threshold:  ${renderThreshold()}",
+                              style: const TextStyle(fontSize: 16.0)))
+                    ]),
+                    Row(children: [
+                      const Text("-1.0"),
+                      Expanded(
+                          child: Slider(
+                        min: -1.0,
+                        max: 0.0,
+                        divisions: 100,
+                        value: feedThreshold,
+                        label: feedThreshold.toStringAsFixed(2),
+                        onChanged: (value) =>
+                            setState(() => feedThreshold = value),
+                        onChangeEnd: (value) => fc.setThreshold(value),
+                      )),
+                      const Text("0.0")
+                    ])
+                  ])))
+        ])
+      ],
+    );
+  }
+
+  String renderInterval() {
+    if (feedIntervalMs == 0.0) {
+      return "realtime";
+    }
+    return "${feedIntervalMs.toStringAsFixed(0)}ms";
+  }
+
+  String renderThreshold() {
+    return feedThreshold.toStringAsFixed(2);
   }
 
   String createPostLink(ProcessedPost p) {
