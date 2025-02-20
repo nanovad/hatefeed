@@ -38,6 +38,10 @@ class ThemeSwitcherState extends State<ThemeSwitcher> {
           }
         });
       },
+      style: const ButtonStyle(
+        visualDensity: VisualDensity(horizontal: -4.0),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
     );
   }
 }
