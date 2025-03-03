@@ -40,12 +40,13 @@ type jetstreamRecord struct {
 }
 
 type ProcessedPost struct {
-	At        uint64  `json:"at"`
-	Text      string  `json:"text"`
-	Handle    string  `json:"handle"`
-	Did       string  `json:"did"`
-	Rkey      string  `json:"rkey"`
-	Sentiment float64 `json:"sentiment"`
+	At          uint64  `json:"at"`
+	Text        string  `json:"text"`
+	Handle      *string `json:"handle"`
+	DisplayName *string `json:"displayName"`
+	Did         string  `json:"did"`
+	Rkey        string  `json:"rkey"`
+	Sentiment   float64 `json:"sentiment"`
 }
 
 type Feed struct {
@@ -69,13 +70,15 @@ func readAndNotifyMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensi
 		s := sentiment.ComputeSentiment(analyzer, body)
 
 		if s < 0.00 {
+			// Handle and DisplayName will get retrieved by the client loop
 			onData(ProcessedPost{
-				At:        0,
-				Text:      body,
-				Handle:    "handle",
-				Did:       x.Did,
-				Rkey:      x.Commit.Rkey,
-				Sentiment: s,
+				At:          0,
+				Text:        body,
+				Handle:      nil,
+				DisplayName: nil,
+				Did:         x.Did,
+				Rkey:        x.Commit.Rkey,
+				Sentiment:   s,
 			})
 		}
 	}

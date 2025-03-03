@@ -203,6 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return PostCard(
       backgroundColor: Theme.of(context).colorScheme.surface,
       handle: p.handle,
+      displayName: p.displayName,
       body: p.text,
       extreme: p.sentiment < -0.9,
       sentiment: p.sentiment,

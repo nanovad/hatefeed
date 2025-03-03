@@ -5,6 +5,7 @@ class PostCard extends StatelessWidget {
   final Color backgroundColor;
   final bool extreme;
   final String handle;
+  final String displayName;
   final String body;
   final double sentiment;
   final Function()? onCopyPressed;
@@ -16,6 +17,7 @@ class PostCard extends StatelessWidget {
       required this.backgroundColor,
       required this.extreme,
       required this.handle,
+      required this.displayName,
       required this.body,
       required this.sentiment,
       this.onCopyPressed,
@@ -62,12 +64,19 @@ class PostCard extends StatelessWidget {
                     // This puts the handle near the top of the card.
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Author handle
+                      // Display name and handle
                       Padding(
                           padding:
                               const EdgeInsets.fromLTRB(4.0, 8.0, 0.0, 0.0),
-                          child: Text(handle,
-                              style: const TextStyle(fontSize: 16.0))),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                            // Display name
+                            Text(displayName,
+                                style: const TextStyle(fontSize: 16.0)),
+                            // Handle
+                            Text(handle, style: const TextStyle(fontSize: 12.0))
+                          ])),
                       const Spacer(),
                       Row(children: [
                         // Copy IconButton
@@ -81,7 +90,7 @@ class PostCard extends StatelessWidget {
                             icon: const Icon(Icons.share),
                             onPressed: onSharePressed),
                         IconButton(
-                          iconSize: 24.0,
+                            iconSize: 24.0,
                             onPressed: onOpenInBrowserPressed,
                             icon: const Icon(Icons.open_in_browser))
                       ]),
