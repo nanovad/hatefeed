@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hatefeed/about_screen.dart';
+import 'package:hatefeed/analytics_helpers.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/firebase_options.dart';
@@ -25,13 +26,20 @@ var fc = FeedController(
 var f = fc.feed;
 
 void main() async {
-  // Activate Firebase, but only in prod
+  // Activate Firebase, but only collect analytics in prod
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kReleaseMode) {
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
     await FirebaseAnalytics.instance.logAppOpen();
+    log("Activated analytics");
+  } else {
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+    log("Disabled analytics");
   }
+  Timer.periodic(Duration(seconds: 30), (timer) async {
+    await FirebaseAnalytics.instance.logEvent(name: "app_active");
+  });
 
   fc.connectWithRetry();
   // fc.connectWithRetry(feedWebsocketUri, const Duration(seconds: 60));
@@ -164,6 +172,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 return buildBottomSettingsSheet(
                                     context, setModalState);
                               }));
+                      FirebaseAnalytics.instance
+                          .logEvent(name: "settings_modal_launched");
                     },
                     icon: const Icon(Icons.tune_outlined))),
             PopupMenuButton(
@@ -228,6 +238,9 @@ class _MyHomePageState extends State<MyHomePage> {
               content: Text("Copied post to clipboard"),
               duration: Duration(milliseconds: 1500)));
         }
+        FirebaseAnalytics.instance.logEvent(
+            name: "post_copy_pressed",
+            parameters: expandPostForAnalyticsParams(p));
       },
       onSharePressed: () async {
         Clipboard.setData(ClipboardData(text: createPostLink(p)));
@@ -236,6 +249,9 @@ class _MyHomePageState extends State<MyHomePage> {
               content: Text("Copied link to post to clipboard"),
               duration: Duration(milliseconds: 1500)));
         }
+        FirebaseAnalytics.instance.logEvent(
+            name: "post_share_pressed",
+            parameters: expandPostForAnalyticsParams(p));
       },
       onOpenInBrowserPressed: () async {
         await launchUrl(Uri.parse(createPostLink(p)));
@@ -244,6 +260,9 @@ class _MyHomePageState extends State<MyHomePage> {
               content: Text("Opened post in browser"),
               duration: Duration(milliseconds: 1500)));
         }
+        FirebaseAnalytics.instance.logEvent(
+            name: "post_open_in_browser_pressed",
+            parameters: expandPostForAnalyticsParams(p));
       },
     );
   }
@@ -254,6 +273,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: IconButton(
             onPressed: () {
               launchUrl(Uri.parse("https://github.com/nanovad/hatefeed"));
+              FirebaseAnalytics.instance.logEvent(name: "github_link_clicked");
             },
             icon: const ImageIcon(AssetImage("images/github-mark.png"))));
   }
@@ -281,6 +301,11 @@ class _MyHomePageState extends State<MyHomePage> {
           value: paused,
           onChanged: (newState) => setState(() {
                 paused = newState;
+                if (paused) {
+                  FirebaseAnalytics.instance.logEvent(name: "feed_paused");
+                } else {
+                  FirebaseAnalytics.instance.logEvent(name: "feed_unpaused");
+                }
               }))
     ]);
   }
