@@ -32,10 +32,8 @@ void main() async {
   if (kReleaseMode) {
     await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
     await FirebaseAnalytics.instance.logAppOpen();
-    log("Activated analytics");
   } else {
     await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
-    log("Disabled analytics");
   }
   Timer.periodic(Duration(seconds: 30), (timer) async {
     await FirebaseAnalytics.instance.logEvent(name: "app_active");
@@ -363,10 +361,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     ]),
                     Row(
                       children: [
-                        const Text("realtime"),
+                        const Text("500ms"),
                         Expanded(
                             child: Slider(
-                          min: 0,
+                          min: 500,
                           max: 10000.0,
                           divisions: 100,
                           value: feedIntervalMs,
@@ -413,9 +411,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String renderInterval() {
-    if (feedIntervalMs == 0.0) {
-      return "realtime";
-    }
     return "${feedIntervalMs.toStringAsFixed(0)}ms";
   }
 

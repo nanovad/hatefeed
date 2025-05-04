@@ -90,6 +90,8 @@ func (c *Client) clientMessageLoop() {
 			switch cc := cc.(type) {
 			case ClientCommandInterval:
 				interval := cc.Interval
+				// Lower interval limit of 500ms
+				interval = max(500, interval)
 				c.targetInterval.Store(interval)
 			case ClientCommandThreshold:
 				threshold := cc.Threshold
@@ -144,6 +146,11 @@ func (c *Client) feedLoop() {
 					// We also don't want to empty out the queue too fast / busy wait, so add a small delay
 					time.Sleep(100 * time.Millisecond)
 					continue
+				}
+				if c.feedMode == FEED_MODE_THRESHOLD {
+					// If we're in threshold mode and going to send the message, ensure we don't
+					// spam the client. Mostly preventative to reduce server load.
+					time.Sleep(500 * time.Millisecond)
 				}
 
 				// Send the message to the client
