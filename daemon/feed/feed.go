@@ -72,7 +72,7 @@ func readAndNotifyMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensi
 		if s < 0.00 {
 			// Handle and DisplayName will get retrieved by the client loop
 			onData(ProcessedPost{
-				At:          0,
+				At:          uint64(x.TimeUs),
 				Text:        body,
 				Handle:      nil,
 				DisplayName: nil,
