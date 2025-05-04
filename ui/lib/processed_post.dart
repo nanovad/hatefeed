@@ -24,4 +24,24 @@ class ProcessedPost {
         did = json["did"],
         rkey = json["rkey"],
         sentiment = json["sentiment"];
+  Map<String, dynamic> toJson() {
+    return {
+      "at": at.microsecondsSinceEpoch,
+      "text": text,
+      "handle": handle,
+      "displayName": displayName,
+      "did": did,
+      "rkey": rkey,
+      "sentiment": sentiment
+    };
+  }
+
+  @override
+  int get hashCode =>
+      Object.hashAll([at, text, handle, displayName, did, rkey, sentiment]);
+
+  @override
+  bool operator ==(Object other) {
+    return hashCode == other.hashCode;
+  }
 }
