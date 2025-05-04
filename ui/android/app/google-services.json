@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "745668140557",
+    "project_id": "hatefeed-ee623",
+    "storage_bucket": "hatefeed-ee623.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:745668140557:android:3e00e1c38c286001d93f44",
+        "android_client_info": {
+          "package_name": "com.example.hatefeed"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtQc07JBKoS-V6KVngCBETzVmYMkoO02k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

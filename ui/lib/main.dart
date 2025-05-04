@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hatefeed/about_screen.dart';
 
 import 'package:hatefeed/feed.dart';
+import 'package:hatefeed/firebase_options.dart';
 import 'package:hatefeed/processed_post.dart';
 import 'package:hatefeed/widget_connection_state.dart';
 import 'package:hatefeed/widget_feed_mode_switcher.dart';
@@ -14,13 +16,23 @@ import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_theme_switcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
+
 Uri feedWebsocketUri = Uri.parse(
     kDebugMode ? "ws://localhost:8080" : "wss://hatefeed.nanovad.com/feed_ws/");
 var fc = FeedController(
     uri: feedWebsocketUri, timeout: const Duration(seconds: 120));
 var f = fc.feed;
 
-void main() {
+void main() async {
+  // Activate Firebase, but only in prod
+  if (kReleaseMode) {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+    await FirebaseAnalytics.instance.logAppOpen();
+  }
+
   fc.connectWithRetry();
   // fc.connectWithRetry(feedWebsocketUri, const Duration(seconds: 60));
   // f.connect(feedWebsocketUri);
