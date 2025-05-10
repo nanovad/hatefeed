@@ -15,6 +15,7 @@ import 'package:hatefeed/widget_connection_state.dart';
 import 'package:hatefeed/widget_feed_mode_switcher.dart';
 import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_theme_switcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -57,10 +58,34 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode themeMode = ThemeMode.system;
+  Future<SharedPreferences> futurePrefs = SharedPreferences.getInstance();
+  SharedPreferences? prefs;
 
   void onThemeModeChanged(ThemeMode s) {
     setState(() {
       themeMode = s;
+    });
+    prefs?.setString("theme_mode", s.name);
+  }
+
+  _MyAppState() {
+    futurePrefs.then((v) {
+      prefs = v;
+      String? prefThemeMode = prefs?.getString("theme_mode");
+      if(prefThemeMode != null) {
+        try {
+          // Load the theme from shared preferences.
+          onThemeModeChanged(ThemeMode.values.byName(prefThemeMode));
+        }
+        on ArgumentError {
+          // If the key was incorrect (maybe the enum got updated?)
+          onThemeModeChanged(ThemeMode.system);
+        }
+      }
+      else {
+        // First run or a cache clear, probably. Set to default.
+        onThemeModeChanged(ThemeMode.system);
+      }
     });
   }
 
