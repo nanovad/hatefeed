@@ -14,7 +14,7 @@ import 'package:hatefeed/processed_post.dart';
 import 'package:hatefeed/widget_connection_state.dart';
 import 'package:hatefeed/widget_feed_mode_switcher.dart';
 import 'package:hatefeed/widget_post_card.dart';
-import 'package:hatefeed/widget_theme_switcher.dart';
+import 'package:hatefeed/widget_settings_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -23,7 +23,11 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 Uri feedWebsocketUri = Uri.parse(
     kDebugMode ? "ws://localhost:8080" : "wss://hatefeed.nanovad.com/feed_ws/");
 var fc = FeedController(
-    uri: feedWebsocketUri, timeout: const Duration(seconds: 120));
+    uri: feedWebsocketUri,
+    timeout: const Duration(seconds: 120),
+    mode: FeedMode.interval,
+    intervalMs: 3000,
+    threshold: -0.75);
 var f = fc.feed;
 
 void main() async {
@@ -40,7 +44,6 @@ void main() async {
     await FirebaseAnalytics.instance.logEvent(name: "app_active");
   });
 
-  fc.connectWithRetry();
   // fc.connectWithRetry(feedWebsocketUri, const Duration(seconds: 60));
   // f.connect(feedWebsocketUri);
   f.onQueueAdded = () {
@@ -86,6 +89,22 @@ class _MyAppState extends State<MyApp> {
         // First run or a cache clear, probably. Set to default.
         onThemeModeChanged(ThemeMode.system);
       }
+
+      int? intervalMs = prefs?.getInt("feed_interval");
+      fc.intervalMs = intervalMs ?? fc.intervalMs;
+
+      double? threshold = prefs?.getDouble("feed_threshold");
+      fc.threshold = threshold ?? fc.threshold;
+
+      int? feedModeSer = prefs?.getInt("feed_mode");
+      // In the event that the preference is missing (or invalid,
+      // i.e. n > FeedMode enum length), it will fall back to the currently set
+      // FeedMode, which is probably the hard-coded default from the
+      // FeedController initializer.
+      FeedMode? prefsMode = FeedMode.values.elementAtOrNull(feedModeSer ?? fc.mode.index);
+      fc.mode = prefsMode ?? fc.mode;
+
+      fc.connectWithRetry();
     });
   }
 
@@ -127,9 +146,6 @@ class _MyHomePageState extends State<MyHomePage> {
   num messagesSinceLastRefresh = 0.0;
   num messagesAverage = 0.0;
   late Timer messagesTimer;
-  var feedMode = FeedMode.interval;
-  double feedIntervalMs = 3000;
-  double feedThreshold = -0.75;
 
   bool paused = false;
 
@@ -143,11 +159,6 @@ class _MyHomePageState extends State<MyHomePage> {
     f.onQueueAdded = postQueueHandler;
     fc.onConnected = () {
       setState(() {});
-      // Make sure the server and client mode/interval/threshold parameters are
-      // in sync, in case we're reconnecting.
-      fc.setMode(feedMode);
-      fc.setInterval(feedIntervalMs.toInt());
-      fc.setThreshold(feedThreshold);
     };
     fc.onConnecting = () {
       setState(() {});
@@ -189,12 +200,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () {
                       showModalBottomSheet(
                           context: context,
-                          builder: (context) => StatefulBuilder(builder:
-                                  (BuildContext context,
-                                      StateSetter setModalState) {
-                                return buildBottomSettingsSheet(
-                                    context, setModalState);
-                              }));
+                          builder: (context) => SettingsModal(
+                              feedController: fc,
+                              defaultThemeMode: widget.defaultThemeMode,
+                              onThemeModeChanged: widget.onThemeModeChanged));
                       FirebaseAnalytics.instance
                           .logEvent(name: "settings_modal_launched");
                     },
@@ -331,116 +340,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               }))
     ]);
-  }
-
-  Widget buildBottomSettingsSheet(BuildContext context, StateSetter setState) {
-    // We're shadowing setState so that the modal updates properly, instead of
-    // updating further up the tree.
-    return Column(
-      children: [
-        const Padding(
-            padding: EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0.0),
-            child: Text("Settings", style: TextStyle(fontSize: 18.0))),
-        const Divider(thickness: 1.0),
-        Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-            child: Row(children: [
-              const Text("Theme", style: TextStyle(fontSize: 16.0)),
-              const Spacer(),
-              ThemeSwitcher(
-                  defaultThemeMode: widget.defaultThemeMode,
-                  onThemeModeChanged: widget.onThemeModeChanged)
-            ])),
-        // Feed mode and associated sliders
-        Column(children: [
-          // Label and segmented button
-          Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-              child: Row(
-                children: [
-                  const Text("Feed mode", style: TextStyle(fontSize: 16.0)),
-                  const Spacer(),
-                  FeedModeSwitcher(
-                    defaultFeedMode: feedMode,
-                    onFeedModeChanged: (selected) {
-                      setState(() {
-                        feedMode = selected;
-                        fc.setMode(feedMode);
-                      });
-                    },
-                  )
-                ],
-              )),
-          // Slider according to which mode we're in
-          // Interval
-          Visibility(
-              visible: feedMode == FeedMode.interval,
-              child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-                  child: Column(children: [
-                    Row(children: [
-                      Padding(
-                          padding: const EdgeInsets.only(right: 32.0),
-                          child: Text("Interval:  ${renderInterval()}",
-                              style: const TextStyle(fontSize: 16.0)))
-                    ]),
-                    Row(
-                      children: [
-                        const Text("500ms"),
-                        Expanded(
-                            child: Slider(
-                          min: 500,
-                          max: 10000.0,
-                          divisions: 100,
-                          value: feedIntervalMs,
-                          label: "${feedIntervalMs.toStringAsFixed(0)}ms",
-                          onChanged: (value) =>
-                              setState(() => feedIntervalMs = value),
-                          onChangeEnd: (value) => fc.setInterval(value.toInt()),
-                        )),
-                        const Text("10000ms")
-                      ],
-                    )
-                  ]))),
-          // Threshold
-          Visibility(
-              visible: feedMode == FeedMode.threshold,
-              child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-                  child: Column(children: [
-                    Row(children: [
-                      Padding(
-                          padding: const EdgeInsets.only(right: 32.0),
-                          child: Text("Threshold:  ${renderThreshold()}",
-                              style: const TextStyle(fontSize: 16.0)))
-                    ]),
-                    Row(children: [
-                      const Text("-1.0"),
-                      Expanded(
-                          child: Slider(
-                        min: -1.0,
-                        max: 0.0,
-                        divisions: 100,
-                        value: feedThreshold,
-                        label: feedThreshold.toStringAsFixed(2),
-                        onChanged: (value) =>
-                            setState(() => feedThreshold = value),
-                        onChangeEnd: (value) => fc.setThreshold(value),
-                      )),
-                      const Text("0.0")
-                    ])
-                  ])))
-        ])
-      ],
-    );
-  }
-
-  String renderInterval() {
-    return "${feedIntervalMs.toStringAsFixed(0)}ms";
-  }
-
-  String renderThreshold() {
-    return feedThreshold.toStringAsFixed(2);
   }
 
   String createPostLink(ProcessedPost p) {

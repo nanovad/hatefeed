@@ -74,6 +74,10 @@ class FeedController {
   Duration timeout;
   bool _reconnecting = false;
 
+  int intervalMs;
+  double threshold;
+  FeedMode mode;
+
   set state(value) {
     if (_state != value) {
       _state = value;
@@ -87,7 +91,12 @@ class FeedController {
   Function()? onConnecting;
   Function()? onDisconnected;
 
-  FeedController({required this.uri, required this.timeout}) {
+  FeedController(
+      {required this.uri,
+      required this.timeout,
+      required this.intervalMs,
+      required this.threshold,
+      required this.mode}) {
     feed.onDone = _feedOnDone;
     feed.onError = _feedOnError;
   }
@@ -115,6 +124,12 @@ class FeedController {
     }
 
     state = FeedState.connected;
+
+    // Make sure the server and client mode/interval/threshold parameters are
+    // in sync, in case we've reconnecting.
+    setMode(mode);
+    setInterval(intervalMs);
+    setThreshold(threshold);
     return true;
   }
 
@@ -148,10 +163,12 @@ class FeedController {
 
   void setInterval(int intervalMs) {
     feed.channel?.sink.add("INTERVAL $intervalMs");
+    this.intervalMs = intervalMs;
   }
 
   void setThreshold(double threshold) {
     feed.channel?.sink.add("THRESHOLD $threshold");
+    this.threshold = threshold;
   }
 
   void setMode(FeedMode mode) {
@@ -162,6 +179,7 @@ class FeedController {
     else if(mode == FeedMode.threshold) {
       sink?.add("MODE THRESHOLD");
     }
+    this.mode = mode;
   }
 
   void onStateChanged() {
