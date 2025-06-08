@@ -1,8 +1,8 @@
 class ProcessedPost {
   DateTime at;
   String text;
-  String handle;
-  String displayName;
+  String? handle;
+  String? displayName;
   String did;
   String rkey;
   double sentiment;

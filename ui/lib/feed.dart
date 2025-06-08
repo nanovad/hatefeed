@@ -35,9 +35,14 @@ class Feed {
       }
 
       broadcast.listen((data) {
-        var pp = ProcessedPost.fromJson(jsonDecode(data));
-        queue.add(pp);
-        onQueueAdded?.call();
+        try {
+          var pp = ProcessedPost.fromJson(jsonDecode(data));
+          queue.add(pp);
+          onQueueAdded?.call();
+        }
+        catch(_) {
+          log("Failed to decode an incoming post, skipping");
+        }
       }, onDone: () {
         channel = null;
         onDone?.call();
