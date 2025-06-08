@@ -296,6 +296,17 @@ class _MyHomePageState extends State<MyHomePage> {
             name: "post_open_in_browser_pressed",
             parameters: expandPostForAnalyticsParams(p));
       },
+      onOpenProfileInBrowserPressed: () async {
+        await launchUrl(Uri.parse(createProfileLink(p)));
+        if (mounted) {
+          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
+              content: Text("Opened profile in browser"),
+              duration: Duration(milliseconds: 1500)));
+        }
+        FirebaseAnalytics.instance.logEvent(
+            name: "post_open_profile_in_browser_pressed",
+            parameters: expandPostForAnalyticsParams(p));
+      },
     );
   }
 
@@ -342,9 +353,10 @@ class _MyHomePageState extends State<MyHomePage> {
     ]);
   }
 
-  String createPostLink(ProcessedPost p) {
-    return "https://bsky.app/profile/${p.did}/post/${p.rkey}";
-  }
+  String createPostLink(ProcessedPost p) =>
+      "https://bsky.app/profile/${p.did}/post/${p.rkey}";
+  String createProfileLink(ProcessedPost p) =>
+      "https://bsky.app/profile/${p.did}";
 
   Color sentimentColor(num sentiment) {
     num lerpPoint = -sentiment;

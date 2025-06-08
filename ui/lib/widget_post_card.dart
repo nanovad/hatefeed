@@ -11,6 +11,7 @@ class PostCard extends StatelessWidget {
   final Function()? onCopyPressed;
   final Function()? onSharePressed;
   final Function()? onOpenInBrowserPressed;
+  final Function()? onOpenProfileInBrowserPressed;
 
   const PostCard(
       {super.key,
@@ -22,7 +23,8 @@ class PostCard extends StatelessWidget {
       required this.sentiment,
       this.onCopyPressed,
       this.onSharePressed,
-      this.onOpenInBrowserPressed});
+      this.onOpenInBrowserPressed,
+      this.onOpenProfileInBrowserPressed});
 
   Color sentimentColor(double sentiment) {
     num lerpPoint = -sentiment;
@@ -65,18 +67,21 @@ class PostCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Display name and handle
-                      Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(4.0, 8.0, 0.0, 0.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                            // Display name
-                            Text(displayName,
-                                style: const TextStyle(fontSize: 16.0)),
-                            // Handle
-                            Text(handle, style: const TextStyle(fontSize: 12.0))
-                          ])),
+                      InkWell(
+                          onTap: onOpenProfileInBrowserPressed,
+                          borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                          child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Display name
+                                    Text(displayName,
+                                        style: const TextStyle(fontSize: 16.0)),
+                                    // Handle
+                                    Text(handle,
+                                        style: const TextStyle(fontSize: 12.0))
+                                  ]))),
                       const Spacer(),
                       Row(children: [
                         // Copy IconButton
@@ -96,6 +101,8 @@ class PostCard extends StatelessWidget {
                       ]),
                     ]),
                 // Body
+                Divider(
+                    height: 4.0, thickness: 1.0, indent: 8.0, endIndent: 8.0),
                 Padding(
                     padding: const EdgeInsets.fromLTRB(8.0, 12.0, 8.0, 12.0),
                     child: Row(
