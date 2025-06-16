@@ -10,7 +10,9 @@ import (
 )
 
 // TODO: Enable compression
-var jetstreamUri = "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
+const jetstreamUri = "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
+
+var handleDefault = "<unknown>"
 
 type jetstreamMessage struct {
 	Did    string
@@ -29,7 +31,7 @@ type jetstreamCommit struct {
 }
 
 type jetstreamRecord struct {
-	RecordType string
+	RecordType string `json:"$type"`
 	CreatedAt  string
 	Subject    struct {
 		Cid string
@@ -74,8 +76,8 @@ func readAndNotifyMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensi
 			onData(ProcessedPost{
 				At:          uint64(x.TimeUs),
 				Text:        body,
-				Handle:      nil,
-				DisplayName: nil,
+				Handle:      &handleDefault,
+				DisplayName: &handleDefault,
 				Did:         x.Did,
 				Rkey:        x.Commit.Rkey,
 				Sentiment:   s,

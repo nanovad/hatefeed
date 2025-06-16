@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:bluesky/bluesky.dart' hide ListView, Image;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -254,10 +255,26 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget buildPostTile(BuildContext context, ProcessedPost p) {
+    // Use the locally hydrated author's handle, if available, or the provided
+    // handle from the server, which is allowed to be null. If it is, use a
+    // default text of "pending".
+    var handle = p.fullPost?.author.handle ?? p.handle ?? "<pending>";
+    // Use the hydrated author's display name, or the provided displayName from
+    // the server. If either of those is blank (may be the case for accounts
+    // that have never set a displayName), use the handle.
+    // This is consistent with how Bluesky renders them.
+    var displayName = p.fullPost?.author.displayName ?? p.displayName;
+    if(displayName?.isEmpty ?? true) {
+      displayName = handle;
+    }
+    // Ensure that a UI update is triggered as soon as the post finishes hydrating
+    p.onHydrationCompleted ??= () {
+      setState(() {});
+    };
     return PostCard(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      handle: p.handle ?? "",
-      displayName: p.displayName ?? "",
+      handle: handle,
+      displayName: displayName!, // Safe, defaults to "<pending>" in the worst case
       body: p.text,
       extreme: p.sentiment < -0.9,
       sentiment: p.sentiment,

@@ -11,7 +11,7 @@ enum FeedState { connected, connecting, disconnected, reconnecting, initial }
 class Feed {
   WebSocketChannel? channel;
   Feed();
-  Queue queue = Queue();
+  Queue<ProcessedPost> queue = Queue<ProcessedPost>();
   Function()? onQueueAdded;
   Function()? onDone;
   Function(Object error)? onError;
@@ -34,9 +34,25 @@ class Feed {
         throw Exception("Incorrect handshake from server");
       }
 
-      broadcast.listen((data) {
+      broadcast.listen((data) async {
         try {
-          var pp = ProcessedPost.fromJson(jsonDecode(data));
+          ProcessedPost pp = ProcessedPost.fromJson(jsonDecode(data));
+          try {
+            // Wait up to 250ms for the post to hydrate. If it times out, don't
+            // fail, but put it in the feed anyway and let it resolve whenever.
+            // This may be as long as 1s for the first attempt (specified in the
+            // call to hydrate), or may then fail, triggering retries that take
+            // additional time.
+            await pp
+                .hydrate(timeout: Duration(seconds: 1))
+                .timeout(Duration(milliseconds: 250), onTimeout: () {
+              log("Hydration short timeout reached");
+            });
+          }
+          catch(_) {
+            // Non-fatal if we can't hydrate, ignore
+            log("Failed to hydrate an incoming post, using as-is");
+          }
           queue.add(pp);
           onQueueAdded?.call();
         }

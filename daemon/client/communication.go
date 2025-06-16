@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"hatefeed/feed"
-	"hatefeed/profile"
 	"log"
 	"sync/atomic"
 	"time"
@@ -120,7 +119,6 @@ func (c *Client) fanoutReceiver() {
 }
 
 func (c *Client) feedLoop() {
-	hc := profile.GetProfileCache()
 	for {
 		select {
 		case <-c.quitting:
@@ -130,17 +128,6 @@ func (c *Client) feedLoop() {
 			p := c.hatestack.Pop()
 			// Sometimes the hatestack is empty, so we need to check for nil
 			if p != nil {
-				// Hydrate the profile. This is a network request and could be
-				// slow, but this loop usually isn't running very quickly.
-				profile, err := hc.ResolveProfile(p.Did)
-				if err != nil {
-					p.Handle = nil
-					p.DisplayName = nil
-				} else {
-					p.Handle = &profile.Handle
-					p.DisplayName = &profile.DisplayName
-				}
-
 				// We're using threshold mode but the sentiment is above the threshold - skip
 				if c.feedMode == FEED_MODE_THRESHOLD && p.Sentiment >= float64(c.threshold.Load())/100 {
 					// We also don't want to empty out the queue too fast / busy wait, so add a small delay

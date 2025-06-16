@@ -21,7 +21,7 @@ var upgrader = websocket.Upgrader{
 var fanout = feed.NewFanout()
 
 func main() {
-	fmt.Printf("Hatefeed daemon v0.4.3\n")
+	fmt.Printf("Hatefeed daemon v0.4.4\n")
 	http.HandleFunc("/", respond)
 	go http.ListenAndServe("127.0.0.1:8080", nil)
 
