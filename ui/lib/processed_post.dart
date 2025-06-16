@@ -59,7 +59,7 @@ class ProcessedPost {
   /// This function will automatically retry with increasing backoff.
   /// If [onHydrationCompleted] is provided via the constructor, it will be
   /// called when the widget finishes hydration, even if it took a few retries.
-  /// 
+  ///
   /// The default [timeout] is 1 second. The default [retryTimeout] is 5 seconds,
   /// increasing by 5 seconds with each successive retry attempt. Note that this
   /// function also waits 3s between retry attempts.
@@ -68,7 +68,6 @@ class ProcessedPost {
       Duration? retryTimeout,
       int retryCount = 0,
       int retryLimit = 2}) async {
-
     if (retryCount > retryLimit) {
       log("Too many post hydration retries");
       return;

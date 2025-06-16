@@ -48,15 +48,13 @@ class Feed {
                 .timeout(Duration(milliseconds: 250), onTimeout: () {
               log("Hydration short timeout reached");
             });
-          }
-          catch(_) {
+          } catch (_) {
             // Non-fatal if we can't hydrate, ignore
             log("Failed to hydrate an incoming post, using as-is");
           }
           queue.add(pp);
           onQueueAdded?.call();
-        }
-        catch(_) {
+        } catch (_) {
           log("Failed to decode an incoming post, skipping");
         }
       }, onDone: () {
@@ -66,8 +64,7 @@ class Feed {
         channel = null;
         onError?.call(e);
       });
-    }
-    catch (any) {
+    } catch (any) {
       channel = null;
       rethrow;
     }
@@ -118,13 +115,13 @@ class FeedController {
   }
 
   void _feedOnDone() {
-    if(!_reconnecting) {
+    if (!_reconnecting) {
       connectWithRetry();
     }
   }
 
   void _feedOnError(Object error) {
-    if(!_reconnecting) {
+    if (!_reconnecting) {
       connectWithRetry();
     }
   }
@@ -189,10 +186,9 @@ class FeedController {
 
   void setMode(FeedMode mode) {
     var sink = feed.channel?.sink;
-    if(mode == FeedMode.interval) {
+    if (mode == FeedMode.interval) {
       sink?.add("MODE RATE");
-    }
-    else if(mode == FeedMode.threshold) {
+    } else if (mode == FeedMode.threshold) {
       sink?.add("MODE THRESHOLD");
     }
     this.mode = mode;

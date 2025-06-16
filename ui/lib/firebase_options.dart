@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'hatefeed-ee623.firebasestorage.app',
     measurementId: 'G-EJ86100F52',
   );
-
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:bluesky/bluesky.dart' hide ListView, Image;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -76,17 +75,15 @@ class _MyAppState extends State<MyApp> {
     futurePrefs.then((v) {
       prefs = v;
       String? prefThemeMode = prefs?.getString("theme_mode");
-      if(prefThemeMode != null) {
+      if (prefThemeMode != null) {
         try {
           // Load the theme from shared preferences.
           onThemeModeChanged(ThemeMode.values.byName(prefThemeMode));
-        }
-        on ArgumentError {
+        } on ArgumentError {
           // If the key was incorrect (maybe the enum got updated?)
           onThemeModeChanged(ThemeMode.system);
         }
-      }
-      else {
+      } else {
         // First run or a cache clear, probably. Set to default.
         onThemeModeChanged(ThemeMode.system);
       }
@@ -102,7 +99,8 @@ class _MyAppState extends State<MyApp> {
       // i.e. n > FeedMode enum length), it will fall back to the currently set
       // FeedMode, which is probably the hard-coded default from the
       // FeedController initializer.
-      FeedMode? prefsMode = FeedMode.values.elementAtOrNull(feedModeSer ?? fc.mode.index);
+      FeedMode? prefsMode =
+          FeedMode.values.elementAtOrNull(feedModeSer ?? fc.mode.index);
       fc.mode = prefsMode ?? fc.mode;
 
       fc.connectWithRetry();
@@ -264,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // that have never set a displayName), use the handle.
     // This is consistent with how Bluesky renders them.
     var displayName = p.fullPost?.author.displayName ?? p.displayName;
-    if(displayName?.isEmpty ?? true) {
+    if (displayName?.isEmpty ?? true) {
       displayName = handle;
     }
     // Ensure that a UI update is triggered as soon as the post finishes hydrating
@@ -274,7 +272,8 @@ class _MyHomePageState extends State<MyHomePage> {
     return PostCard(
       backgroundColor: Theme.of(context).colorScheme.surface,
       handle: handle,
-      displayName: displayName!, // Safe, defaults to "<pending>" in the worst case
+      displayName:
+          displayName!, // Safe, defaults to "<pending>" in the worst case
       body: p.text,
       extreme: p.sentiment < -0.9,
       sentiment: p.sentiment,

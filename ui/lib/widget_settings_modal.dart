@@ -94,19 +94,20 @@ class SettingsModalState extends State<SettingsModal> {
                         const Text("${intervalMin}ms"),
                         Expanded(
                             child: Slider(
-                          min: intervalMin,
-                          max: intervalMax,
-                          divisions: intervalDivisions,
-                          value: widget.feedController.intervalMs.toDouble(),
-                          label: renderInterval(),
-                          onChanged: (value) => setState(() =>
-                              widget.feedController.intervalMs = value.toInt()),
-                          onChangeEnd: (value) {
-                            widget.feedController.setInterval(value.toInt());
+                                min: intervalMin,
+                                max: intervalMax,
+                                divisions: intervalDivisions,
+                                value:
+                                    widget.feedController.intervalMs.toDouble(),
+                                label: renderInterval(),
+                                onChanged: (value) => setState(() => widget
+                                    .feedController.intervalMs = value.toInt()),
+                                onChangeEnd: (value) {
+                                  widget.feedController
+                                      .setInterval(value.toInt());
                                   prefs?.setInt("feed_interval",
                                       widget.feedController.intervalMs);
-                          }
-                        )),
+                                })),
                         const Text("${intervalMax}ms")
                       ],
                     )
@@ -127,18 +128,17 @@ class SettingsModalState extends State<SettingsModal> {
                       const Text("-1.0"),
                       Expanded(
                           child: Slider(
-                        min: -1.0,
-                        max: 0.0,
-                        divisions: 100,
-                        value: widget.feedController.threshold,
-                        label: renderThreshold(),
-                        onChanged: (value) => setState(
-                            () => widget.feedController.threshold = value),
-                        onChangeEnd: (value) {
-                            widget.feedController.setThreshold(value);
-                            prefs?.setDouble("feed_threshold", value);
-                        }
-                      )),
+                              min: -1.0,
+                              max: 0.0,
+                              divisions: 100,
+                              value: widget.feedController.threshold,
+                              label: renderThreshold(),
+                              onChanged: (value) => setState(() =>
+                                  widget.feedController.threshold = value),
+                              onChangeEnd: (value) {
+                                widget.feedController.setThreshold(value);
+                                prefs?.setDouble("feed_threshold", value);
+                              })),
                       const Text("0.0")
                     ])
                   ])))
