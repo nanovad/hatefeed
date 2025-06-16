@@ -61,44 +61,60 @@ class PostCard extends StatelessWidget {
               child: Column(children: [
                 // Header row
                 Row(
-                    mainAxisSize: MainAxisSize.max,
                     // Align smaller widgets to the top of the header.
                     // This puts the handle near the top of the card.
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Display name and handle
-                      InkWell(
-                          onTap: onOpenProfileInBrowserPressed,
-                          borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                          child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Display name
-                                    Text(displayName,
-                                        style: const TextStyle(fontSize: 16.0)),
-                                    // Handle
-                                    Text(handle,
-                                        style: const TextStyle(fontSize: 12.0))
-                                  ]))),
-                      const Spacer(),
-                      Row(children: [
-                        // Copy IconButton
-                        IconButton(
-                            iconSize: 24.0,
-                            onPressed: onCopyPressed,
-                            icon: const Icon(Icons.copy)),
-                        // Share IconButton
-                        IconButton(
-                            iconSize: 24.0,
-                            icon: const Icon(Icons.share),
-                            onPressed: onSharePressed),
-                        IconButton(
-                            iconSize: 24.0,
-                            onPressed: onOpenInBrowserPressed,
-                            icon: const Icon(Icons.open_in_browser))
-                      ]),
+                      Expanded(
+                          child: InkWell(
+                              onTap: onOpenProfileInBrowserPressed,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(8.0)),
+                              child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Display name
+                                        Text(
+                                          displayName,
+                                          style:
+                                              const TextStyle(fontSize: 16.0),
+                                          overflow: TextOverflow.fade,
+                                          maxLines: 1,
+                                          softWrap: false,
+                                        ),
+                                        // Handle
+                                        Text(
+                                          handle,
+                                          style:
+                                              const TextStyle(fontSize: 12.0),
+                                          overflow: TextOverflow.fade,
+                                          maxLines: 1,
+                                          softWrap: false,
+                                        )
+                                      ])))),
+                      Expanded(flex: 0, child: Container()),
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            // Copy IconButton
+                            IconButton(
+                                iconSize: 24.0,
+                                onPressed: onCopyPressed,
+                                icon: const Icon(Icons.copy)),
+                            // Share IconButton
+                            IconButton(
+                                iconSize: 24.0,
+                                icon: const Icon(Icons.share),
+                                onPressed: onSharePressed),
+                            IconButton(
+                                iconSize: 24.0,
+                                onPressed: onOpenInBrowserPressed,
+                                icon: const Icon(Icons.open_in_browser))
+                          ]),
                     ]),
                 // Body
                 Divider(
