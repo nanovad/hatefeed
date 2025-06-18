@@ -4,16 +4,14 @@ import 'dart:developer';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hatefeed/about_screen.dart';
-import 'package:hatefeed/analytics_helpers.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/firebase_options.dart';
+import 'package:hatefeed/post_card/widget_post_card.dart';
 import 'package:hatefeed/processed_post.dart';
 import 'package:hatefeed/widget_connection_state.dart';
 import 'package:hatefeed/widget_feed_mode_switcher.dart';
-import 'package:hatefeed/widget_post_card.dart';
 import 'package:hatefeed/widget_settings_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -253,77 +251,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget buildPostTile(BuildContext context, ProcessedPost p) {
-    // Use the locally hydrated author's handle, if available, or the provided
-    // handle from the server, which is allowed to be null. If it is, use a
-    // default text of "pending".
-    var handle = p.fullPost?.author.handle ?? p.handle ?? "<pending>";
-    // Use the hydrated author's display name, or the provided displayName from
-    // the server. If either of those is blank (may be the case for accounts
-    // that have never set a displayName), use the handle.
-    // This is consistent with how Bluesky renders them.
-    var displayName = p.fullPost?.author.displayName ?? p.displayName;
-    if (displayName?.isEmpty ?? true) {
-      displayName = handle;
-    }
-    // Ensure that a UI update is triggered as soon as the post finishes hydrating
+    // Ensure that a UI update gets triggered if the post is slow to hydrate.
     p.onHydrationCompleted ??= () {
       setState(() {});
     };
-    return PostCard(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      handle: handle,
-      displayName:
-          displayName!, // Safe, defaults to "<pending>" in the worst case
-      body: p.text,
-      extreme: p.sentiment < -0.9,
-      sentiment: p.sentiment,
-      onCopyPressed: () {
-        Clipboard.setData(ClipboardData(text: "${p.handle}\n${p.text}"));
-        // Make sure we are mounted in the Widget tree; if we are not, we can't
-        // show a toast.
-        if (mounted) {
-          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-              content: Text("Copied post to clipboard"),
-              duration: Duration(milliseconds: 1500)));
-        }
-        FirebaseAnalytics.instance.logEvent(
-            name: "post_copy_pressed",
-            parameters: expandPostForAnalyticsParams(p));
-      },
-      onSharePressed: () async {
-        Clipboard.setData(ClipboardData(text: createPostLink(p)));
-        if (mounted) {
-          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-              content: Text("Copied link to post to clipboard"),
-              duration: Duration(milliseconds: 1500)));
-        }
-        FirebaseAnalytics.instance.logEvent(
-            name: "post_share_pressed",
-            parameters: expandPostForAnalyticsParams(p));
-      },
-      onOpenInBrowserPressed: () async {
-        await launchUrl(Uri.parse(createPostLink(p)));
-        if (mounted) {
-          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-              content: Text("Opened post in browser"),
-              duration: Duration(milliseconds: 1500)));
-        }
-        FirebaseAnalytics.instance.logEvent(
-            name: "post_open_in_browser_pressed",
-            parameters: expandPostForAnalyticsParams(p));
-      },
-      onOpenProfileInBrowserPressed: () async {
-        await launchUrl(Uri.parse(createProfileLink(p)));
-        if (mounted) {
-          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-              content: Text("Opened profile in browser"),
-              duration: Duration(milliseconds: 1500)));
-        }
-        FirebaseAnalytics.instance.logEvent(
-            name: "post_open_profile_in_browser_pressed",
-            parameters: expandPostForAnalyticsParams(p));
-      },
-    );
+    return PostCard(post: p);
   }
 
   Widget buildGitHubIconWidget() {
@@ -367,28 +299,5 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               }))
     ]);
-  }
-
-  String createPostLink(ProcessedPost p) =>
-      "https://bsky.app/profile/${p.did}/post/${p.rkey}";
-  String createProfileLink(ProcessedPost p) =>
-      "https://bsky.app/profile/${p.did}";
-
-  Color sentimentColor(num sentiment) {
-    num lerpPoint = -sentiment;
-    if (lerpPoint < 0.0) {
-      lerpPoint = 0.0;
-    }
-
-    return Color.lerp(Colors.black, Colors.red, lerpPoint.toDouble())!;
-  }
-
-  Text buildSentimentScore(BuildContext context, num sentiment) {
-    Color color = sentimentColor(sentiment);
-    bool bold = sentiment < -0.75;
-    return Text(sentiment.toStringAsFixed(2),
-        style: TextStyle(
-            color: color,
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal));
   }
 }

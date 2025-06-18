@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hatefeed/widget_post_card.dart';
+import 'package:hatefeed/post_card/widget_post_card.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hatefeed/processed_post.dart';
 
 void main() {
   group("Layout sizing", () {
@@ -14,12 +15,14 @@ void main() {
                       BoxConstraints.loose(const Size.fromWidth(750.0)),
                   child: ListView(reverse: true, children: [
                     PostCard(
-                        backgroundColor: Colors.white,
-                        extreme: true,
-                        handle: "long.handle" * 100,
-                        displayName: "longdisplayname" * 100,
-                        body: "Sample body",
-                        sentiment: -0.95)
+                        post: ProcessedPost(
+                            at: DateTime.now(),
+                            did: "testdid",
+                            rkey: "testrkey",
+                            displayName: "longdisplayname" * 100,
+                            handle: "longhandle" * 100,
+                            text: "sample text",
+                            sentiment: -0.95))
                   ])))));
     });
   });
