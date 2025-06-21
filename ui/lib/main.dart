@@ -255,7 +255,7 @@ class _MyHomePageState extends State<MyHomePage> {
     p.onHydrationCompleted ??= () {
       setState(() {});
     };
-    return PostCard(post: p);
+    return PostCard(key: Key(p.did + p.rkey), showAvatar: false, post: p);
   }
 
   Widget buildGitHubIconWidget() {

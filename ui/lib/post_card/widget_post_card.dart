@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 @immutable
 class PostCard extends StatelessWidget {
   final ProcessedPost post;
+  final bool showAvatar;
 
   // Use the hydrated author's display name, or the provided displayName from
   // the server. If either of those is blank (may be the case for accounts
@@ -34,7 +35,7 @@ class PostCard extends StatelessWidget {
       "https://bsky.app/profile/${post.did}/post/${post.rkey}";
   String get profileLink => "https://bsky.app/profile/${post.did}";
 
-  const PostCard({super.key, required this.post});
+  const PostCard({super.key, required this.post, this.showAvatar = false});
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +62,10 @@ class PostCard extends StatelessWidget {
                     onCopyPressed: () => copyPostText(context),
                     onSharePressed: () => copyShareLink(context),
                     onOpenPostInBrowserPressed: () => openPost(context),
+                    avatarUrl: showAvatar
+                        ? post.fullPost?.author.avatar
+                            ?.replaceFirst("avatar", "avatar_thumbnail")
+                        : null,
                     displayName: displayName,
                     handle: handle),
                 Divider(

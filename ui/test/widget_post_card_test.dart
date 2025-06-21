@@ -15,14 +15,16 @@ void main() {
                       BoxConstraints.loose(const Size.fromWidth(750.0)),
                   child: ListView(reverse: true, children: [
                     PostCard(
-                        post: ProcessedPost(
-                            at: DateTime.now(),
-                            did: "testdid",
-                            rkey: "testrkey",
-                            displayName: "longdisplayname" * 100,
-                            handle: "longhandle" * 100,
-                            text: "sample text",
-                            sentiment: -0.95))
+                      post: ProcessedPost(
+                          at: DateTime.now(),
+                          did: "testdid",
+                          rkey: "testrkey",
+                          displayName: "longdisplayname" * 100,
+                          handle: "longhandle" * 100,
+                          text: "sample text",
+                          sentiment: -0.95),
+                      showAvatar: false,
+                    )
                   ])))));
     });
   });
