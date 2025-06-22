@@ -2,14 +2,15 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hatefeed/analytics_helpers.dart';
+import 'package:hatefeed/appearance_preferences_model.dart';
 import 'package:hatefeed/post_card/header.dart';
 import 'package:hatefeed/processed_post.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 @immutable
 class PostCard extends StatelessWidget {
   final ProcessedPost post;
-  final bool showAvatar;
 
   // Use the hydrated author's display name, or the provided displayName from
   // the server. If either of those is blank (may be the case for accounts
@@ -35,54 +36,59 @@ class PostCard extends StatelessWidget {
       "https://bsky.app/profile/${post.did}/post/${post.rkey}";
   String get profileLink => "https://bsky.app/profile/${post.did}";
 
-  const PostCard({super.key, required this.post, this.showAvatar = false});
+  const PostCard({super.key, required this.post});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(4.0),
-      // Elevate each card off the background like the Material Card widget
-      child: Material(
-          color: Theme.of(context).colorScheme.surface,
-          elevation: 5.0,
-          // Give it a rounded border, colored red for extreme sentiment scores
-          shape: RoundedRectangleBorder(
-              side: BorderSide(
-                  width: _extreme ? 2.0 : 1.0,
-                  color: _extreme ? Colors.red : Colors.transparent),
-              borderRadius: const BorderRadius.all(Radius.circular(8.0))),
-          // Further pad the interior of the card to give the border breathing
-          // room
-          child: Padding(
-              padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 4.0),
-              // Card body - header, divider, post text, and sentiment score
-              child: Column(children: [
-                PostCardHeader(
-                    onOpenProfileInBrowserPressed: () => openProfile(context),
-                    onCopyPressed: () => copyPostText(context),
-                    onSharePressed: () => copyShareLink(context),
-                    onOpenPostInBrowserPressed: () => openPost(context),
-                    avatarUrl: showAvatar
-                        ? post.fullPost?.author.avatar
-                            ?.replaceFirst("avatar", "avatar_thumbnail")
-                        : null,
-                    displayName: displayName,
-                    handle: handle),
-                Divider(
-                    height: 4.0, thickness: 1.0, indent: 8.0, endIndent: 8.0),
-                // Body
-                Padding(
-                    padding: const EdgeInsets.fromLTRB(8.0, 12.0, 8.0, 12.0),
-                    child: Row(
-                      children: [
-                        // Post text
-                        Expanded(child: SelectableText(post.text)),
-                        // Sentiment score
-                        buildSentimentText(context, post.sentiment)
-                      ],
-                    )),
-              ]))),
-    );
+    return Consumer<AppearancePreferencesModel>(
+        builder: (consumerContext, appearancePrefs, child) {
+      return Padding(
+        padding: const EdgeInsets.all(4.0),
+        // Elevate each card off the background like the Material Card widget
+        child: Material(
+            color: Theme.of(consumerContext).colorScheme.surface,
+            elevation: 5.0,
+            // Give it a rounded border, colored red for extreme sentiment scores
+            shape: RoundedRectangleBorder(
+                side: BorderSide(
+                    width: _extreme ? 2.0 : 1.0,
+                    color: _extreme ? Colors.red : Colors.transparent),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0))),
+            // Further pad the interior of the card to give the border breathing
+            // room
+            child: Padding(
+                padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 4.0),
+                // Card body - header, divider, post text, and sentiment score
+                child: Column(children: [
+                  PostCardHeader(
+                      onOpenProfileInBrowserPressed: () =>
+                          openProfile(consumerContext),
+                      onCopyPressed: () => copyPostText(consumerContext),
+                      onSharePressed: () => copyShareLink(consumerContext),
+                      onOpenPostInBrowserPressed: () =>
+                          openPost(consumerContext),
+                      avatarUrl: appearancePrefs.showAvatars
+                          ? post.fullPost?.author.avatar
+                              ?.replaceFirst("avatar", "avatar_thumbnail")
+                          : null,
+                      displayName: displayName,
+                      handle: handle),
+                  Divider(
+                      height: 4.0, thickness: 1.0, indent: 8.0, endIndent: 8.0),
+                  // Body
+                  Padding(
+                      padding: const EdgeInsets.fromLTRB(8.0, 12.0, 8.0, 12.0),
+                      child: Row(
+                        children: [
+                          // Post text
+                          Expanded(child: SelectableText(post.text)),
+                          // Sentiment score
+                          buildSentimentText(consumerContext, post.sentiment)
+                        ],
+                      )),
+                ]))),
+      );
+    });
   }
 
   // Widget build helpers

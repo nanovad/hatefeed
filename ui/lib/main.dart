@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hatefeed/about_screen.dart';
+import 'package:hatefeed/appearance_preferences_model.dart';
 
 import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/firebase_options.dart';
@@ -15,6 +16,7 @@ import 'package:hatefeed/widget_feed_mode_switcher.dart';
 import 'package:hatefeed/widget_settings_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 
@@ -143,6 +145,8 @@ class _MyHomePageState extends State<MyHomePage> {
   num messagesSinceLastRefresh = 0.0;
   num messagesAverage = 0.0;
   late Timer messagesTimer;
+  AppearancePreferencesModel appearancePreferences =
+      AppearancePreferencesModel();
 
   bool paused = false;
 
@@ -185,69 +189,76 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: FittedBox(fit: BoxFit.scaleDown, child: Text(widget.title)),
-          actions: [
-            Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                child: IconButton(
-                    onPressed: () {
-                      showModalBottomSheet(
-                          context: context,
-                          builder: (context) => SettingsModal(
-                              feedController: fc,
-                              defaultThemeMode: widget.defaultThemeMode,
-                              onThemeModeChanged: widget.onThemeModeChanged));
-                      FirebaseAnalytics.instance
-                          .logEvent(name: "settings_modal_launched");
-                    },
-                    icon: const Icon(Icons.tune_outlined))),
-            PopupMenuButton(
-                itemBuilder: (context) => [
-                      PopupMenuItem(
-                        child: const Text("About"),
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => const AboutScreen()));
+  Widget build(BuildContext outerContext) {
+    return ChangeNotifierProvider.value(
+        value: appearancePreferences,
+        builder: (context, child) => Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+              title:
+                  FittedBox(fit: BoxFit.scaleDown, child: Text(widget.title)),
+              actions: [
+                Padding(
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                    child: IconButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                              context: context,
+                              builder: (_) => ChangeNotifierProvider.value(
+                                  value: appearancePreferences,
+                                  child: SettingsModal(
+                                      feedController: fc,
+                                      defaultThemeMode: widget.defaultThemeMode,
+                                      onThemeModeChanged:
+                                          widget.onThemeModeChanged)));
+                          FirebaseAnalytics.instance
+                              .logEvent(name: "settings_modal_launched");
                         },
-                      )
-                    ])
-          ],
-        ),
-        bottomNavigationBar: BottomAppBar(
-          padding: const EdgeInsets.all(4.0),
-          height: 48.0,
-          child: Row(
-            children: [
-              buildGitHubIconWidget(),
-              Expanded(
-                  child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                        icon: const Icon(Icons.tune_outlined))),
+                PopupMenuButton(
+                    itemBuilder: (context) => [
+                          PopupMenuItem(
+                            child: const Text("About"),
+                            onTap: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => const AboutScreen()));
+                            },
+                          )
+                        ])
+              ],
+            ),
+            bottomNavigationBar: BottomAppBar(
+              padding: const EdgeInsets.all(4.0),
+              height: 48.0,
+              child: Row(
                 children: [
-                  ConnectionStateIndicator(state: fc.state),
-                  buildMessageRateWidget(),
+                  buildGitHubIconWidget(),
+                  Expanded(
+                      child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ConnectionStateIndicator(state: fc.state),
+                      buildMessageRateWidget(),
+                    ],
+                  )),
+                  buildPauseToggle()
                 ],
-              )),
-              buildPauseToggle()
-            ],
-          ),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surfaceDim,
-        body: Column(children: [
-          Expanded(
-              child: Center(
-                  child: ConstrainedBox(
-            constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
-            child: ListView.builder(
-                reverse: true,
-                padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-                itemCount: posts.length,
-                itemBuilder: (context, i) => buildPostTile(context, posts[i])),
-          )))
-        ]));
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surfaceDim,
+            body: Column(children: [
+              Expanded(
+                  child: Center(
+                      child: ConstrainedBox(
+                constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
+                child: ListView.builder(
+                    reverse: true,
+                    padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+                    itemCount: posts.length,
+                    itemBuilder: (context, i) =>
+                        buildPostTile(context, posts[i])),
+              )))
+            ])));
   }
 
   Widget buildPostTile(BuildContext context, ProcessedPost p) {
@@ -255,7 +266,7 @@ class _MyHomePageState extends State<MyHomePage> {
     p.onHydrationCompleted ??= () {
       setState(() {});
     };
-    return PostCard(key: Key(p.did + p.rkey), showAvatar: false, post: p);
+    return PostCard(key: Key(p.did + p.rkey), post: p);
   }
 
   Widget buildGitHubIconWidget() {

@@ -35,6 +35,7 @@ class PostCardHeader extends StatelessWidget {
                   child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        buildAvatar(),
                         Flexible(
                             flex: 1,
                             child: Column(
