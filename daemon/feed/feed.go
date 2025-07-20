@@ -42,13 +42,14 @@ type jetstreamRecord struct {
 }
 
 type ProcessedPost struct {
-	At          uint64  `json:"at"`
-	Text        string  `json:"text"`
-	Handle      *string `json:"handle"`
-	DisplayName *string `json:"displayName"`
-	Did         string  `json:"did"`
-	Rkey        string  `json:"rkey"`
-	Sentiment   float64 `json:"sentiment"`
+	At              uint64                     `json:"at"`
+	Text            string                     `json:"text"`
+	Handle          *string                    `json:"handle"`
+	DisplayName     *string                    `json:"displayName"`
+	Did             string                     `json:"did"`
+	Rkey            string                     `json:"rkey"`
+	Sentiment       float64                    `json:"sentiment"`
+	TokenSentiments []sentiment.TokenSentiment `json:"tokenSentiments"`
 }
 
 type Feed struct {
@@ -70,17 +71,19 @@ func readAndNotifyMessage(conn *websocket.Conn, analyzer *vader.SentimentIntensi
 
 	if x.Kind == "commit" && body != "" && lang == "en" {
 		s := sentiment.ComputeSentiment(analyzer, body)
+		ts := sentiment.ComputeWordSentiments(analyzer, body)
 
 		if s < 0.00 {
 			// Handle and DisplayName will get retrieved by the client loop
 			onData(ProcessedPost{
-				At:          uint64(x.TimeUs),
-				Text:        body,
-				Handle:      &handleDefault,
-				DisplayName: &handleDefault,
-				Did:         x.Did,
-				Rkey:        x.Commit.Rkey,
-				Sentiment:   s,
+				At:              uint64(x.TimeUs),
+				Text:            body,
+				Handle:          &handleDefault,
+				DisplayName:     &handleDefault,
+				Did:             x.Did,
+				Rkey:            x.Commit.Rkey,
+				Sentiment:       s,
+				TokenSentiments: ts,
 			})
 		}
 	}

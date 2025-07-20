@@ -81,7 +81,8 @@ class PostCard extends StatelessWidget {
                       child: Row(
                         children: [
                           // Post text
-                          Expanded(child: SelectableText(post.text)),
+                          Expanded(
+                              child: buildPostText(context, appearancePrefs)),
                           // Sentiment score
                           buildSentimentText(consumerContext, post.sentiment)
                         ],
@@ -99,6 +100,70 @@ class PostCard extends StatelessWidget {
     }
 
     return Color.lerp(Colors.black, Colors.red, lerpPoint.toDouble())!;
+  }
+
+  Widget buildPostText(
+      BuildContext context, AppearancePreferencesModel appearancePrefs) {
+    return appearancePrefs.colorBodySentiment
+        ? buildColoredText(context)
+        : SelectableText(post.text);
+  }
+
+  static List<TokenSentiment> reduceLikeSpans(List<TokenSentiment> sentiments) {
+    /// Reduce a list of token sentiments into spans of tokens with the same
+    /// score. Used to reduce the number of spans the renderer has to draw.
+
+    List<TokenSentiment> ret = List.empty(growable: true);
+    TokenSentiment last = TokenSentiment(token: "", score: sentiments[0].score);
+
+    // Build the token spans by accumulating all token text into one
+    // TokenSentiment instance for each run of a specific score.
+    for (var sentiment in sentiments) {
+      if (sentiment.score != last.score) {
+        ret.add(last);
+        last = sentiment.clone();
+      } else {
+        last.token += sentiment.token;
+      }
+    }
+    ret.add(last);
+    return ret;
+  }
+
+  RichText buildColoredText(BuildContext context) {
+    /// Build a RichText widget for the post body with words colored according
+    /// to sentiment score.
+
+    FontWeight mapFontWeight(double score) {
+      if (score < -0.80) {
+        return FontWeight.bold;
+      } else if (score < -0.60) {
+        return FontWeight.w600;
+      } else if (score < -0.30) {
+        return FontWeight.w500;
+      }
+      return FontWeight.normal;
+    }
+
+    Color bodySentimentColor(BuildContext context, double sentiment) {
+      num lerpPoint = -sentiment;
+      if (lerpPoint < 0.0) {
+        lerpPoint = 0.0;
+      }
+
+      // Boosted color
+      return Color.lerp(Theme.of(context).textTheme.bodyMedium?.color,
+          Colors.red, lerpPoint.toDouble() * 2)!;
+    }
+
+    List<TextSpan> spans = reduceLikeSpans(post.tokenSentiments)
+        .map((e) => TextSpan(
+            text: e.token,
+            style: TextStyle(
+                color: bodySentimentColor(context, e.score),
+                fontWeight: mapFontWeight(e.score))))
+        .toList();
+    return RichText(text: TextSpan(children: spans));
   }
 
   Widget buildSentimentText(BuildContext context, double sentiment) {

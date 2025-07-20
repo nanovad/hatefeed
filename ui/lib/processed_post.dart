@@ -4,6 +4,41 @@ import 'dart:developer';
 import 'package:bluesky/bluesky.dart';
 import 'package:bluesky/core.dart';
 
+class TokenSentiment {
+  String token;
+  double score;
+
+  TokenSentiment({required this.token, required this.score});
+
+  @override
+  int get hashCode => Object.hashAllUnordered([token, score]);
+
+  @override
+  bool operator ==(Object other) {
+    return other is TokenSentiment &&
+        other.token == token &&
+        other.score == score;
+  }
+
+  // TokenSentiment.clone(TokenSentiment s): this(token: s.token, score: s.score);
+  TokenSentiment clone() {
+    return TokenSentiment(token: token, score: score);
+  }
+
+  @override
+  String toString() {
+    return "TokenSentiment{token: \"$token\", score $score}";
+  }
+
+  TokenSentiment.fromJson(Map<String, dynamic> json)
+      : token = json["token"],
+        score = json["score"];
+
+  Map<String, dynamic> toJson() {
+    return {"token": token, "score": score};
+  }
+}
+
 class ProcessedPost {
   DateTime at;
   String text;
@@ -12,6 +47,7 @@ class ProcessedPost {
   String did;
   String rkey;
   double sentiment;
+  List<TokenSentiment> tokenSentiments;
   Post? fullPost;
   Function? onHydrationCompleted;
 
@@ -22,7 +58,15 @@ class ProcessedPost {
       required this.displayName,
       required this.did,
       required this.rkey,
-      required this.sentiment});
+      required this.sentiment,
+      required this.tokenSentiments});
+  
+  // List<TokenSentiment> deserTokenSentiments(List<Map<String, dynamic>> jsonTs) {
+  //   List<TokenSentiment> sentiments = List<TokenSentiment>.from(
+  //     jsonTs.map((e) => TokenSentiment.fromJson(e))
+  //   );
+  //   return sentiments;
+  // }
 
   ProcessedPost.fromJson(Map<String, dynamic> json)
       : at = DateTime.fromMicrosecondsSinceEpoch(json["at"]),
@@ -31,7 +75,13 @@ class ProcessedPost {
         displayName = json["displayName"],
         did = json["did"],
         rkey = json["rkey"],
-        sentiment = json["sentiment"];
+        sentiment = json["sentiment"],
+        // List.from here ensures the type is correctly inferred, and fails
+        // early if the json is in a bad format.
+        // Then we deserialize each element.
+        tokenSentiments = List<TokenSentiment>.from(
+            json["tokenSentiments"].map((e) => TokenSentiment.fromJson(e))
+    );
   Map<String, dynamic> toJson() {
     return {
       "at": at.microsecondsSinceEpoch,
@@ -40,7 +90,8 @@ class ProcessedPost {
       "displayName": displayName,
       "did": did,
       "rkey": rkey,
-      "sentiment": sentiment
+      "sentiment": sentiment,
+      "tokenSentiments": List<TokenSentiment>.from(tokenSentiments.map((ts) => ts.toJson()))
     };
   }
 

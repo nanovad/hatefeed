@@ -69,6 +69,13 @@ class SettingsModalState extends State<SettingsModal> {
                   style: TextStyle(fontSize: 16.0)),
               value: appearancePrefs.showAvatars,
               onChanged: (v) => appearancePrefs.showAvatars = v),
+          SwitchListTile(
+            contentPadding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+            title: const Text("Color words by individual sentiment",
+                style: TextStyle(fontSize: 16.0)),
+            value: appearancePrefs.colorBodySentiment,
+            onChanged: (v) => appearancePrefs.colorBodySentiment = v,
+          ),
           // Feed mode and associated sliders
           Column(children: [
             // Label and segmented button
