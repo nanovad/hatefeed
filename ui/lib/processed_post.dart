@@ -91,7 +91,7 @@ class ProcessedPost {
       "did": did,
       "rkey": rkey,
       "sentiment": sentiment,
-      "tokenSentiments": List<TokenSentiment>.from(tokenSentiments.map((ts) => ts.toJson()))
+      "tokenSentiments": tokenSentiments.map((ts) => ts.toJson())
     };
   }
 
@@ -102,6 +102,10 @@ class ProcessedPost {
   @override
   bool operator ==(Object other) {
     return hashCode == other.hashCode;
+  }
+
+  ProcessedPost clone() {
+    return ProcessedPost.fromJson(toJson());
   }
 
   String get atUri => "at://$did/app.bsky.feed.post/$rkey";
