@@ -11,6 +11,7 @@ import 'package:hatefeed/feed.dart';
 import 'package:hatefeed/firebase_options.dart';
 import 'package:hatefeed/post_card/widget_post_card.dart';
 import 'package:hatefeed/processed_post.dart';
+import 'package:hatefeed/swipeable_screen.dart';
 import 'package:hatefeed/widget_connection_state.dart';
 import 'package:hatefeed/widget_feed_mode_switcher.dart';
 import 'package:hatefeed/widget_settings_modal.dart';
@@ -29,6 +30,8 @@ var fc = FeedController(
     intervalMs: 3000,
     threshold: -0.75);
 var f = fc.feed;
+
+enum FeedViewMode { realTime, swipeable }
 
 void main() async {
   // Activate Firebase, but only collect analytics in prod
@@ -63,6 +66,8 @@ class _MyAppState extends State<MyApp> {
   ThemeMode themeMode = ThemeMode.system;
   Future<SharedPreferences> futurePrefs = SharedPreferences.getInstance();
   SharedPreferences? prefs;
+  AppearancePreferencesModel appearancePreferences =
+      AppearancePreferencesModel();
 
   void onThemeModeChanged(ThemeMode s) {
     setState(() {
@@ -147,10 +152,25 @@ class _MyHomePageState extends State<MyHomePage> {
   late Timer messagesTimer;
   AppearancePreferencesModel appearancePreferences =
       AppearancePreferencesModel();
+  Future<SharedPreferences> futurePrefs = SharedPreferences.getInstance();
+  SharedPreferences? prefs;
 
   bool paused = false;
 
+  FeedViewMode fvm = FeedViewMode.realTime;
+
   _MyHomePageState() : super() {
+    futurePrefs.then((v) {
+      prefs = v;
+
+      String fvmString =
+          prefs?.getString("feed_view_mode") ?? fvm.name;
+      try {
+        setFeedViewMode(FeedViewMode.values.byName(fvmString));
+      } on ArgumentError {
+        setFeedViewMode(fvm);
+      }
+    });
     messagesTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       setState(() {
         messagesAverage = messagesSinceLastRefresh / 10.0;
@@ -198,6 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
               title:
                   FittedBox(fit: BoxFit.scaleDown, child: Text(widget.title)),
               actions: [
+                buildFeedViewModeToggleButton(),
                 Padding(
                     padding: const EdgeInsets.only(left: 16.0, right: 16.0),
                     child: IconButton(
@@ -223,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) => const AboutScreen()));
                             },
-                          )
+                          ),
                         ])
               ],
             ),
@@ -246,19 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             backgroundColor: Theme.of(context).colorScheme.surfaceDim,
-            body: Column(children: [
-              Expanded(
-                  child: Center(
-                      child: ConstrainedBox(
-                constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
-                child: ListView.builder(
-                    reverse: true,
-                    padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-                    itemCount: posts.length,
-                    itemBuilder: (context, i) =>
-                        buildPostTile(context, posts[i])),
-              )))
-            ])));
+            body: buildModedBody()));
   }
 
   Widget buildPostTile(BuildContext context, ProcessedPost p) {
@@ -310,5 +319,91 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               }))
     ]);
+  }
+
+  Widget buildModedBody() {
+    if (fvm == FeedViewMode.realTime) {
+      return buildFeedViewRealTime();
+    } else if (fvm == FeedViewMode.swipeable) {
+      return buildFeedViewSwipeable();
+    } else {
+      throw Exception("Unknown feed view mode");
+    }
+  }
+
+  Widget buildFeedViewRealTime() {
+    return Column(children: [
+      Expanded(
+          child: Center(
+              child: ConstrainedBox(
+        constraints: BoxConstraints.loose(const Size.fromWidth(750.0)),
+        child: ListView.builder(
+            reverse: true,
+            padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+            itemCount: posts.length,
+            itemBuilder: (context, i) => buildPostTile(context, posts[i])),
+      )))
+    ]);
+  }
+
+  Widget buildFeedViewSwipeable() {
+    return SwipeableScreen(
+      getNextPost: () {
+        var last = posts.firstOrNull;
+        return last == null ? null : PostCard(post: last);
+      },
+      onDismissedDislike: (Duration duration) => FirebaseAnalytics.instance
+          .logEvent(
+              name: "swipeable_dislike",
+              parameters: {"view_duration_ms": duration.inMilliseconds}),
+      onDismissedLike: (Duration duration) => FirebaseAnalytics.instance
+          .logEvent(
+              name: "swipeable_like",
+              parameters: {"view_duration_ms": duration.inMilliseconds}),
+    );
+  }
+
+  void setFeedViewMode(FeedViewMode newMode) {
+    if (newMode == FeedViewMode.swipeable) {
+      setState(() {
+        fvm = FeedViewMode.swipeable;
+      });
+      // Override the interval so that fresh posts are available quickly - a
+      // hack until requesting new posts on demand is implemented.
+      // Won't change the shared preferences value if we call it directly.
+      // setInterval has no effect if we're in threshold mode.
+      fc.setInterval(1000);
+      prefs?.setString("feed_view_mode", fvm.name);
+      FirebaseAnalytics.instance.logEvent(name: "feed_view_mode_swipeable");
+    } else if (newMode == FeedViewMode.realTime) {
+      setState(() {
+        fvm = FeedViewMode.realTime;
+      });
+      // Restore the feed interval from shared prefs. See comment on setting to
+      // swipeable above.
+      fc.setInterval(prefs?.getInt("feed_interval") ?? 3000);
+      prefs?.setString("feed_view_mode", fvm.name);
+      FirebaseAnalytics.instance.logEvent(name: "feed_view_mode_realtime");
+    } else {
+      throw Exception("Unknown feed view mode $newMode");
+    }
+  }
+
+  IconButton buildFeedViewModeToggleButton() {
+    if (fvm == FeedViewMode.realTime) {
+      return IconButton(
+        onPressed: () => setFeedViewMode(FeedViewMode.swipeable),
+        icon: const Icon(Icons.web_stories_outlined),
+        tooltip: "Swipe Mode",
+      );
+    } else if (fvm == FeedViewMode.swipeable) {
+      return IconButton(
+        onPressed: () => setFeedViewMode(FeedViewMode.realTime),
+        icon: const Icon(Icons.list_alt),
+        tooltip: "Live Feed Mode",
+      );
+    } else {
+      throw Exception("Could not build view mode toggle menu item");
+    }
   }
 }

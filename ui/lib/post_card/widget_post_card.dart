@@ -59,7 +59,9 @@ class PostCard extends StatelessWidget {
             child: Padding(
                 padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 4.0),
                 // Card body - header, divider, post text, and sentiment score
-                child: Column(children: [
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   PostCardHeader(
                       onOpenProfileInBrowserPressed: () =>
                           openProfile(consumerContext),
