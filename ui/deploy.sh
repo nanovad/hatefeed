@@ -33,11 +33,11 @@ echo ">>> Creating archive..."
 tar -cJf "$out_archive_path" -C "build/web" .
 echo "Done"
 
-echo ">>> Running 'scp \"$out_archive_path\" \"hatefeed.nanovad.com:ui_deploy/\"'"
-scp "$out_archive_path" "hatefeed.nanovad.com:ui_deploy/"
+echo ">>> Running 'scp \"$out_archive_path\" \"hatefeed.ing:ui_deploy/\"'"
+scp "$out_archive_path" "hatefeed.ing:ui_deploy/"
 
 read -p "Deploy into production? (Y/N): " deploy_prod
 if [[ $deploy_prod == [yY] ]]; then
-    ssh "hatefeed.nanovad.com" -t "HATEFEED_VERSION=\"$ver_and_build\" bash deploy.sh"
+    ssh "hatefeed.ing" -t "HATEFEED_VERSION=\"$ver_and_build\" bash deploy.sh"
 fi
 echo "All done!"

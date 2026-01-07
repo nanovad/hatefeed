@@ -18,7 +18,7 @@ class AboutScreen extends StatelessWidget {
           // Version / build number
           FutureBuilder(
               future: PackageInfo.fromPlatform(
-                  baseUrl: "https://hatefeed.nanovad.com/"),
+                  baseUrl: "https://hatefeed.ing/"),
               builder:
                   (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
                 String pi = snapshot.data?.version ?? "failed to retrieve";

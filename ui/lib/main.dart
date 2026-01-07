@@ -22,7 +22,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 Uri feedWebsocketUri = Uri.parse(
-    kDebugMode ? "ws://localhost:8080" : "wss://hatefeed.nanovad.com/feed_ws/");
+    kDebugMode ? "ws://localhost:8080" : "wss://hatefeed.ing/feed_ws/");
 var fc = FeedController(
     uri: feedWebsocketUri,
     timeout: const Duration(seconds: 120),
