@@ -1,0 +1,21 @@
+[package]
+name = "hatefeed_daemon"
+version = "0.7.2"
+edition = "2024"
+
+[profile.docker-release]
+inherits = "release"
+target = "x86_64-unknown-linux-musl"
+
+[dependencies]
+tokio = { version = "1.47.1", features = ["full"]}
+tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-webpki-roots"] }
+futures-util = "0.3.31"
+serde_json = "1.0.149"
+serde = { version = "1.0.228", features = ["derive"] }
+vader-sentimental = "0.1.2"
+tracing-subscriber = "0.3.22"
+tracing = { version = "0.1.44", features = ["log"] }
+rustls = { version = "0.23.36", features = ["aws-lc-rs"] }
+demoji = "0.0.3"
+retry = "2.2.0"

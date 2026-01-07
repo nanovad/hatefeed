@@ -54,8 +54,10 @@ class Feed {
           }
           queue.add(pp);
           onQueueAdded?.call();
-        } catch (_) {
-          log("Failed to decode an incoming post, skipping");
+          log(data);
+        } catch (e) {
+          log("Failed to decode an incoming post, skipping: $e");
+          log(data);
         }
       }, onDone: () {
         channel = null;
