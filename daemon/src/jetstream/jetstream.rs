@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::jetstream::seen_tracker::SeenTracker;
 use crate::jetstream::{Message, ProcessedPost};
 use futures_util::stream::{FusedStream, StreamExt};
 use tokio::net::TcpStream;
@@ -13,9 +14,10 @@ use vader_sentimental::SentimentIntensityAnalyzer;
 const RETRY_DELAY: Duration = Duration::from_millis(5000);
 
 const JETSTREAM_URI: &str =
-    "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post";
+    "wss://jetstream2.us-east.bsky.network/subscribe?wantedCollections=app.bsky.feed.post";
 pub struct Jetstream<'a> {
     pub(crate) client: WebSocketStream<MaybeTlsStream<TcpStream>>,
+    seen_recently: SeenTracker,
     sia: SentimentIntensityAnalyzer<'a>,
     post_sender: broadcast::Sender<ProcessedPost>,
 }
@@ -28,6 +30,7 @@ impl<'a> Jetstream<'a> {
     pub async fn connect(post_sender: &broadcast::Sender<ProcessedPost>) -> Result<Jetstream<'a>> {
         Ok(Jetstream {
             client: connect_async(JETSTREAM_URI).await?.0,
+            seen_recently: SeenTracker::new(),
             sia: SentimentIntensityAnalyzer::new(),
             post_sender: post_sender.clone(),
         })
@@ -69,6 +72,17 @@ impl<'a> Jetstream<'a> {
                     // Skip if languages do not include "en" or languages are unset
                     let en_in_langs = _get_langs(&v).is_some_and(|v| v.iter().any(|l| l == "en"));
                     if !en_in_langs {
+                        continue;
+                    }
+
+                    let text = v.get_text();
+                    let was_seen_recently = match text {
+                        Some("") => continue, // We don't need to track blank post bodies, skip them anyway
+                        Some(iv) => self.seen_recently.record(iv),
+                        None => false,
+                    };
+
+                    if was_seen_recently {
                         continue;
                     }
 

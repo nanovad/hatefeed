@@ -11,6 +11,12 @@ pub struct Message {
     pub commit: Option<Commit>,
 }
 
+impl Message {
+    pub fn get_text(&self) -> Option<&str> {
+        Some(self.commit.as_ref()?.record.as_ref()?.text.as_str())
+    }
+}
+
 #[derive(Deserialize, Debug, Clone)]
 #[allow(dead_code)]
 pub struct Commit {
@@ -63,20 +69,11 @@ pub struct ProcessedPost {
 
 impl ProcessedPost {
     pub fn from_message(m: &Message, sia: &SentimentIntensityAnalyzer) -> Self {
-        let mut text = "".to_string();
-        let mut rkey = "".to_string();
-        match &m.commit {
-            Some(v) => {
-                rkey = v.rkey.clone();
-                match &v.record {
-                    Some(r) => {
-                        text = r.text.clone();
-                    }
-                    None => {}
-                }
-            }
-            None => {}
-        }
+        let text = m.get_text().unwrap_or("");
+        let rkey = match &m.commit {
+            Some(v) => v.rkey.clone(),
+            None => "".to_string(),
+        };
 
         let demojid = text.demojify();
 
@@ -91,7 +88,7 @@ impl ProcessedPost {
         ProcessedPost {
             // at: chrono::DateTime::from_timestamp_micros(m.time_us).unwrap(),
             at: m.time_us,
-            text: text.clone(),
+            text: text.to_string(),
             handle: "<unknown>".to_string(),
             display_name: "<unknown>".to_string(),
             did: m.did.clone(),
