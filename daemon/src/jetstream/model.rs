@@ -13,7 +13,7 @@ pub struct Message {
 
 impl Message {
     pub fn get_text(&self) -> Option<&str> {
-        Some(self.commit.as_ref()?.record.as_ref()?.text.as_str())
+        return Some(self.commit.as_ref()?.record.as_ref()?.text.as_str());
     }
 }
 
@@ -85,7 +85,7 @@ impl ProcessedPost {
             })
             .collect();
 
-        ProcessedPost {
+        return ProcessedPost {
             // at: chrono::DateTime::from_timestamp_micros(m.time_us).unwrap(),
             at: m.time_us,
             text: text.to_string(),
@@ -95,6 +95,6 @@ impl ProcessedPost {
             rkey,
             sentiment: sia.polarity_scores(demojid.as_str()).compound,
             token_sentiments: ts,
-        }
+        };
     }
 }

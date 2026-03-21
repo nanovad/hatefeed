@@ -23,17 +23,17 @@ pub struct Jetstream<'a> {
 }
 
 fn _get_langs(message: &Message) -> Option<&Vec<String>> {
-    message.commit.as_ref()?.record.as_ref()?.langs.as_ref()
+    return message.commit.as_ref()?.record.as_ref()?.langs.as_ref();
 }
 
 impl<'a> Jetstream<'a> {
     pub async fn connect(post_sender: &broadcast::Sender<ProcessedPost>) -> Result<Jetstream<'a>> {
-        Ok(Jetstream {
+        return Ok(Jetstream {
             client: connect_async(JETSTREAM_URI).await?.0,
             seen_recently: SeenTracker::new(),
             sia: SentimentIntensityAnalyzer::new(),
             post_sender: post_sender.clone(),
-        })
+        });
     }
 
     pub async fn reconnect_loop(mut self) {
@@ -67,36 +67,34 @@ impl<'a> Jetstream<'a> {
                     continue;
                 }
             };
-            match serde_json::from_slice::<Message>(raw) {
-                Ok(v) => {
-                    // Skip if languages do not include "en" or languages are unset
-                    let en_in_langs = _get_langs(&v).is_some_and(|v| v.iter().any(|l| l == "en"));
-                    if !en_in_langs {
+            if let Ok(v) = serde_json::from_slice::<Message>(raw) {
+                // Skip if languages do not include "en" or languages are unset
+                let en_in_langs = _get_langs(&v).is_some_and(|v| v.iter().any(|l| l == "en"));
+                if !en_in_langs {
+                    continue;
+                }
+
+                let text = v.get_text();
+                let was_seen_recently = match text {
+                    Some("") => continue, // We don't need to track blank post bodies, skip them anyway
+                    Some(iv) => self.seen_recently.record(iv),
+                    None => false,
+                };
+
+                if was_seen_recently {
+                    continue;
+                }
+
+                let ppm = ProcessedPost::from_message(&v, &self.sia);
+                if ppm.sentiment < 0.0 {
+                    let send_result = self.post_sender.send(ppm);
+                    if send_result.is_err() {
+                        // Expected if there are no receivers
                         continue;
-                    }
-
-                    let text = v.get_text();
-                    let was_seen_recently = match text {
-                        Some("") => continue, // We don't need to track blank post bodies, skip them anyway
-                        Some(iv) => self.seen_recently.record(iv),
-                        None => false,
-                    };
-
-                    if was_seen_recently {
-                        continue;
-                    }
-
-                    let ppm = ProcessedPost::from_message(&v, &self.sia);
-                    if ppm.sentiment < 0.0 {
-                        let send_result = self.post_sender.send(ppm);
-                        if send_result.is_err() {
-                            // Expected if there are no receivers
-                            continue;
-                        }
                     }
                 }
-                Err(_) => {}
             }
         }
+        return;
     }
 }

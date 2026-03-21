@@ -30,10 +30,10 @@ struct TailQueue {
 
 impl TailQueue {
     pub fn new(limit: usize) -> TailQueue {
-        TailQueue {
+        return TailQueue {
             items: VecDeque::with_capacity(limit),
             limit,
-        }
+        };
     }
 
     pub fn push_overwrite(&mut self, val: &ProcessedPost) {
@@ -91,9 +91,9 @@ async fn main() {
 }
 
 pub fn next_client_id() -> usize {
-    CLIENT_COUNTER
-        .get_or_init(|| Arc::new(AtomicUsize::new(0)))
-        .fetch_add(1, Ordering::Relaxed)
+    return CLIENT_COUNTER
+        .get_or_init(|| return Arc::new(AtomicUsize::new(0)))
+        .fetch_add(1, Ordering::Relaxed);
 }
 
 async fn collect_tail_queue(mut rx: Receiver<ProcessedPost>) {
@@ -120,9 +120,7 @@ async fn handler(state: WebserverState, raw_stream: TcpStream, addr: SocketAddr)
             for header in request.headers().iter() {
                 let (name, value): (&HeaderName, &HeaderValue) = header;
                 if name == "X-Forwarded-For" {
-                    if let Ok(value_str) = value.to_str() {
-                        forwarded_for = Some(value_str);
-                    }
+                    forwarded_for = value.to_str().ok();
                 }
             }
             if let Some(ff) = forwarded_for {
@@ -138,7 +136,7 @@ async fn handler(state: WebserverState, raw_stream: TcpStream, addr: SocketAddr)
             } else {
                 info!("Handling WS connection from {}", addr);
             }
-            Ok(response)
+            return Ok(response);
         };
     let ws_stream = match tokio_tungstenite::accept_hdr_async(raw_stream, header_log_callback).await
     {

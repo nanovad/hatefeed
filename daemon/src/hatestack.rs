@@ -10,17 +10,17 @@ pub struct Hatestack {
 impl Hatestack {
     /// Initialize an empty Hatestack with the default limit (see `HATESTACK_LIM`).
     pub fn new() -> Hatestack {
-        Self::new_with_lim(HATESTACK_LIM)
+        return Self::new_with_lim(HATESTACK_LIM);
     }
 
     /// Initialize an empty Hatestack with an explicit limit.
     pub fn new_with_lim(lim: usize) -> Hatestack {
-        Self::new_preloaded_with_lim(Vec::with_capacity(lim + 1), lim)
+        return Self::new_preloaded_with_lim(Vec::with_capacity(lim + 1), lim);
     }
 
     /// Initialize a Hatestack with a preloaded Vec of posts, but the default limit.
     pub fn new_preloaded(preload: Vec<ProcessedPost>) -> Hatestack {
-        Self::new_preloaded_with_lim(preload, HATESTACK_LIM)
+        return Self::new_preloaded_with_lim(preload, HATESTACK_LIM);
     }
 
     /// Initialize a new Hatestack with an explicit limit and preloaded Vec of posts.
@@ -36,8 +36,9 @@ impl Hatestack {
     /// Sort stack in ascending order (called automatically by add)
     /// e.g. the 0th index will have the highest (most positive) sentiment in the stack
     pub fn sort(&mut self) {
-        self.items
-            .sort_by(|a, b| b.sentiment.total_cmp(&a.sentiment))
+        return self
+            .items
+            .sort_by(|a, b| return b.sentiment.total_cmp(&a.sentiment));
     }
 
     /// Add an item to the stack. If this exceeds the stack limit, remove the highest
@@ -53,7 +54,7 @@ impl Hatestack {
 
     /// Get the post with the lowest sentiment, removing it from the stack.
     pub fn pop(&mut self) -> Option<ProcessedPost> {
-        self.items.pop()
+        return self.items.pop();
     }
 
     /// Get the worst item lower than the threshold. Returns None without mutating the stack if such
@@ -63,7 +64,7 @@ impl Hatestack {
         if p?.sentiment <= thresh {
             return self.items.pop();
         }
-        None
+        return None;
     }
 }
 

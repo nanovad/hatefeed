@@ -30,14 +30,14 @@ pub struct SeenTracker {
 
 impl SeenTracker {
     pub fn new() -> SeenTracker {
-        SeenTracker::new_with_capacity(SEEN_LIMIT)
+        return SeenTracker::new_with_capacity(SEEN_LIMIT);
     }
 
     pub fn new_with_capacity(capacity: usize) -> SeenTracker {
-        SeenTracker {
+        return SeenTracker {
             random_state: RandomState::new(),
             items: VecDeque::with_capacity(capacity),
-        }
+        };
     }
 
     /// Keep any `items` with `elapsed` < `SEEN_COOLDOWN`
@@ -55,7 +55,7 @@ impl SeenTracker {
                 return Some(i);
             }
         }
-        None
+        return None;
     }
 
     /// Record the hash of `v` in the tracker at a specific point in time.
@@ -70,7 +70,7 @@ impl SeenTracker {
                 if let Some(item) = self.items.get_mut(i) {
                     item.last_seen = at;
                 }
-                true
+                return true;
             }
             None => {
                 if self.items.len() == self.items.capacity() {
@@ -80,14 +80,14 @@ impl SeenTracker {
                     hash: self.random_state.hash_one(v),
                     last_seen: at,
                 });
-                false
+                return false;
             }
         }
     }
 
     /// Like `.record_at` but at `Instant::now()`
     pub fn record(&mut self, v: &str) -> bool {
-        self.record_at(v, Instant::now())
+        return self.record_at(v, Instant::now());
     }
 }
 

@@ -23,9 +23,10 @@ fn main() -> ExitCode {
     run_streamed("scp", [IMAGE_FILE, format!("{host_name}:").as_str()]);
     let docker_load_cmd: String = format!("docker load -i {IMAGE_FILE}");
     run_streamed("ssh", ["hatefeed.ing", docker_load_cmd.as_str()]);
-    std::fs::remove_file(IMAGE_FILE).expect(format!("Failed to remove {IMAGE_FILE}").as_str());
+    std::fs::remove_file(IMAGE_FILE)
+        .unwrap_or_else(|e| panic!("Failed to remove {IMAGE_FILE}: {e}"));
 
-    ExitCode::SUCCESS
+    return ExitCode::SUCCESS;
 }
 
 fn run_streamed<I, S>(binary: &str, args: I)
@@ -39,24 +40,21 @@ where
         .args(args)
         .stdout(Stdio::piped())
         .spawn()
-        .expect(format!("Failed to run {}", cmd_formatted).as_str());
+        .unwrap_or_else(|e| panic!("Failed to run {cmd_formatted}: {e}"));
     {
         let stdout = cmd
             .stdout
             .as_mut()
             .expect("Failed to get stdout handle for command");
         let stdout_reader = BufReader::new(stdout);
-        let stdout_lines = stdout_reader.lines();
-        for line in stdout_lines {
-            if let Ok(line_ok) = line {
-                println!("{}", line_ok);
-            }
+        for line in stdout_reader.lines().map_while(Result::ok) {
+            println!("{}", line);
         }
     }
 
     let status = cmd
         .wait()
-        .expect(format!("Failed: {}", cmd_formatted).as_str());
+        .unwrap_or_else(|e| panic!("Failed: {cmd_formatted}: {e}"));
     if !status.success() {
         panic!("Failed to run {}", cmd_formatted);
     }

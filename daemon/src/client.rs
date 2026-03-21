@@ -32,16 +32,16 @@ pub struct Client {
 
 impl Client {
     pub fn new() -> Self {
-        Self::new_with_stack(Hatestack::new())
+        return Self::new_with_stack(Hatestack::new());
     }
 
     pub fn new_with_stack(stack: Hatestack) -> Self {
-        Self {
+        return Self {
             stack: Arc::new(Mutex::new(stack)),
             feed_mode: FeedMode::Threshold,
             threshold: 0.0,
             interval: Duration::from_secs(1),
-        }
+        };
     }
 
     pub fn _handle_interval_cmd(&mut self, segments: &Vec<&str>) {
@@ -78,7 +78,7 @@ impl Client {
 
     pub fn handle_client_command(&mut self, raw: &str) {
         let segments: Vec<&str> = raw.split_whitespace().collect();
-        let command = match segments.get(0) {
+        let command = match segments.first() {
             Some(v) => *v,
             None => return,
         };
@@ -219,7 +219,7 @@ impl Client {
             }
         };
 
-        match HandshakeMessages::from_str(s1.as_str()) {
+        return match HandshakeMessages::from_str(s1.as_str()) {
             Some(HandshakeMessages::ClientReady) => {
                 wss.send(Message::from(HandshakeMessages::ServerReply.as_str()))
                     .await
@@ -227,7 +227,7 @@ impl Client {
                 Ok(())
             }
             _ => Err(HandshakeError {}),
-        }
+        };
     }
 }
 
@@ -238,16 +238,16 @@ enum HandshakeMessages {
 
 impl HandshakeMessages {
     fn from_str(s: &str) -> Option<HandshakeMessages> {
-        match s {
+        return match s {
             "READY" => Some(HandshakeMessages::ClientReady),
             "OKAYLESGO" => Some(HandshakeMessages::ServerReply),
             _ => None,
-        }
+        };
     }
     fn as_str(&self) -> &'static str {
-        match self {
+        return match self {
             HandshakeMessages::ClientReady => "READY",
             HandshakeMessages::ServerReply => "OKAYLESGO",
-        }
+        };
     }
 }
