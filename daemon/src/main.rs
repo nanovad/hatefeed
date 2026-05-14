@@ -146,9 +146,10 @@ async fn handler(state: WebserverState, raw_stream: TcpStream, addr: SocketAddr)
     let recv = state.pp_sender.subscribe();
     // Clone the TAIL_QUEUE if we can get it, otherwise set up a new client with a fresh, empty Hatestack.
     let mut c = match TAIL_QUEUE.get() {
-        Some(v) => Client::new_with_stack(Hatestack::new_preloaded(
-            v.lock().await.items.make_contiguous().into(),
-        )),
+        Some(v) => {
+            let preload = v.lock().await.items.iter().cloned().collect();
+            Client::new_with_stack(Hatestack::new_preloaded(preload))
+        }
         None => {
             error!("Couldn't get a lock on the TAIL_QUEUE, proceeding with empty");
             Client::new()

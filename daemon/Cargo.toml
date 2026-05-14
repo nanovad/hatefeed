@@ -2,6 +2,7 @@
 name = "hatefeed_daemon"
 version = "0.7.3"
 edition = "2024"
+default-run = "hatefeed_daemon"
 
 [lints.clippy]
 needless_return = "allow"
